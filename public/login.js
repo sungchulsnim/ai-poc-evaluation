@@ -1,5 +1,6 @@
 const form = document.querySelector("#loginForm");
 const message = document.querySelector("#loginMessage");
+const nextUrl = new URLSearchParams(location.search).get("next") || "/admin";
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -18,7 +19,7 @@ form.addEventListener("submit", async (event) => {
   const data = await response.json();
 
   if (data.ok) {
-    location.href = "/admin";
+    location.href = nextUrl.startsWith("/") ? nextUrl : "/admin";
     return;
   }
 

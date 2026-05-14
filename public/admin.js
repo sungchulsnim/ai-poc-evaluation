@@ -32,13 +32,14 @@ async function loadAll() {
   renderSummary(results);
   renderResults(results);
   renderSettings(appSettings);
+  applyImportedProjectsFromHash();
   renderLinks(results);
 }
 
 async function fetchJson(url) {
   const response = await fetch(url, { cache: "no-store" });
   if (response.status === 401) {
-    location.href = "/login";
+    location.href = `/login?next=${encodeURIComponent(location.pathname + location.hash)}`;
     return new Promise(() => {});
   }
   const data = await response.json();
@@ -106,6 +107,31 @@ function renderResults(data) {
 function renderSettings(data) {
   renderProjectEditor(data.projects);
   renderGroupSettings(data.groups, data.projects);
+}
+
+function applyImportedProjectsFromHash() {
+  const params = new URLSearchParams(location.hash.replace(/^#/, ""));
+  const rawProjects = params.get("projects");
+  if (!rawProjects) return;
+
+  let titles = [];
+  try {
+    titles = JSON.parse(decodeURIComponent(rawProjects));
+  } catch {
+    titles = decodeURIComponent(rawProjects).split(/\r?\n/);
+  }
+
+  const projects = titles
+    .map((title) => String(title || "").replace(/^\s*\d+[.)]\s*/, "").trim())
+    .filter(Boolean)
+    .map((title) => ({ id: `project-${crypto.randomUUID()}`, title }));
+
+  if (!projects.length) return;
+
+  renderProjectEditor(projects);
+  renderGroupSettings(settings.groups, projects);
+  settingsMessage.textContent = "사다리 최종순서가 전체 과제 리스트에 반영되었습니다. 실제 적용하려면 설정 저장을 눌러주세요.";
+  history.replaceState(null, "", location.pathname);
 }
 
 function renderProjectEditor(projects) {
