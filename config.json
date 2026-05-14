@@ -1,0 +1,109 @@
+{
+  "contestName": "AI POC 산출물 평가",
+  "expectedVoters": 110,
+  "scoreMultiplier": 5,
+  "duplicatePolicy": "deviceOrIp",
+  "criteria": [
+    {
+      "id": "businessEffect",
+      "title": "업무 효과성",
+      "question": "시간 절감, 비용 절감, 반복업무 감소, 오류 감소 등 실제 업무 개선 효과가 큰가?"
+    },
+    {
+      "id": "workFit",
+      "title": "현업 적용성",
+      "question": "현업 담당자가 이해하기 쉽고, 실제 업무에 바로 적용하기 쉬운가?"
+    },
+    {
+      "id": "aiQuality",
+      "title": "AI 활용 품질",
+      "question": "AI를 문제 해결에 의미 있게 활용했으며, 결과를 신뢰할 수 있는가?"
+    },
+    {
+      "id": "scalability",
+      "title": "확산 가능성",
+      "question": "다른 부서나 유사 업무에도 적용할 수 있는가?"
+    }
+  ],
+  "groups": [
+    {
+      "id": "group1",
+      "name": "1그룹",
+      "excludedProjectIds": []
+    },
+    {
+      "id": "group2",
+      "name": "2그룹",
+      "excludedProjectIds": []
+    },
+    {
+      "id": "group3",
+      "name": "3그룹",
+      "excludedProjectIds": []
+    },
+    {
+      "id": "group4",
+      "name": "4그룹",
+      "excludedProjectIds": []
+    },
+    {
+      "id": "group5",
+      "name": "5그룹",
+      "excludedProjectIds": []
+    }
+  ],
+  "projects": [
+    {
+      "id": "project01",
+      "title": "손익분석 대시보드"
+    },
+    {
+      "id": "project02",
+      "title": "출시 신모델의 실적 손익 분석"
+    },
+    {
+      "id": "project03",
+      "title": "보조부 분석 (SAP 자동화)"
+    },
+    {
+      "id": "project04",
+      "title": "영수증 자동 인식 에이전트"
+    },
+    {
+      "id": "project05",
+      "title": "사업지원실用 보고서 작성 프로그램"
+    },
+    {
+      "id": "project06",
+      "title": "주요 부서 액션아이템 대쉬보드"
+    },
+    {
+      "id": "project07",
+      "title": "경쟁사 외신 보도 대쉬보드"
+    },
+    {
+      "id": "project08",
+      "title": "생산법인별 도착지 원가경쟁력 대시보드"
+    },
+    {
+      "id": "project09",
+      "title": "생산법인 본사 재수출 이체가 자동화 Web"
+    },
+    {
+      "id": "project10",
+      "title": "판매법인 TIM 지표 관리 및 자동화 분석"
+    },
+    {
+      "id": "project11",
+      "title": "물류비 경영/실행 계획 시뮬레이션 TOOL"
+    },
+    {
+      "id": "project12",
+      "title": "WOS 정기 메일 대시보드 자동 생성 및 송부"
+    },
+    {
+      "id": "project13",
+      "title": "AI 기반 자연어 ASAP 분석"
+    }
+  ]
+}

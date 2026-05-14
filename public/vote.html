@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI POC 산출물 평가</title>
+    <link rel="stylesheet" href="/app.css">
+  </head>
+  <body class="vote-body">
+    <header class="vote-header">
+      <div>
+        <p class="eyebrow" id="teamName">AI POC Workshop</p>
+        <h1 id="pageTitle">산출물 평가</h1>
+      </div>
+      <div class="score-chip">1점-5점</div>
+    </header>
+
+    <main class="vote-main">
+      <section class="notice" id="notice" hidden></section>
+      <section class="done-state" id="doneState" hidden>
+        <p class="eyebrow">Submitted</p>
+        <h2>투표가 완료되었습니다.</h2>
+        <p>이미 이 IP 또는 단말에서 평가가 제출되었습니다.</p>
+      </section>
+
+      <form id="voteForm" hidden>
+        <div class="sticky-progress">
+          <div>
+            <strong id="progressText">0 / 0</strong>
+            <span id="progressDetail">입력 대기</span>
+          </div>
+          <button class="ghost-button compact" id="findMissingButton" type="button">미입력 찾기</button>
+        </div>
+
+        <div class="project-list" id="projectList"></div>
+
+        <div class="submit-bar">
+          <button class="primary-button" id="submitButton" type="submit" disabled>평가 제출</button>
+          <p id="submitHint">모든 항목을 입력하면 제출할 수 있습니다.</p>
+        </div>
+      </form>
+    </main>
+
+    <script src="/vote.js" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: ai-poc-evaluation
+    runtime: docker
+    plan: starter
+    region: singapore
+    healthCheckPath: /api/health
+    disk:
+      name: votes
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: ADMIN_PASSWORD
+        sync: false

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>관리자 로그인</title>
+    <link rel="stylesheet" href="/app.css">
+  </head>
+  <body class="login-body">
+    <main class="login-panel">
+      <p class="eyebrow">AI POC Workshop</p>
+      <h1>관리자 로그인</h1>
+      <form id="loginForm">
+        <label class="input-label" for="password">비밀번호</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <button class="primary-button" type="submit">로그인</button>
+        <p id="loginMessage" class="form-message"></p>
+      </form>
+    </main>
+    <script src="/login.js" type="module"></script>
+  </body>
+</html>

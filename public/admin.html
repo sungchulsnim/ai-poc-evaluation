@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI POC 평가 관리자</title>
+    <link rel="stylesheet" href="/app.css">
+  </head>
+  <body class="admin-body">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">AI POC Workshop</p>
+        <h1>평가 관리자</h1>
+      </div>
+      <div class="top-actions">
+        <button class="ghost-button" id="refreshButton" type="button">새로고침</button>
+        <button class="ghost-button" id="logoutButton" type="button">로그아웃</button>
+      </div>
+    </header>
+
+    <main class="admin-main">
+      <section class="summary-grid" id="summaryGrid" aria-live="polite"></section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Ranking</p>
+            <h2>실시간 결과</h2>
+          </div>
+          <a class="primary-button compact" href="/api/export.csv">CSV 다운로드</a>
+        </div>
+        <div class="table-wrap">
+          <table class="result-table">
+            <thead id="resultHead"></thead>
+            <tbody id="resultBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Links</p>
+            <h2>그룹별 투표 링크</h2>
+          </div>
+        </div>
+        <div class="link-list" id="linkList"></div>
+      </section>
+    </main>
+
+    <script src="/admin.js" type="module"></script>
+  </body>
+</html>
