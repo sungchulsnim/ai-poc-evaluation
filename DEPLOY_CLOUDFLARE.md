@@ -31,12 +31,11 @@ ai-poc-evaluation
 
 테이블은 앱이 처음 실행될 때 자동으로 만들어집니다.
 
-## 3. Pages 프로젝트 만들기
+## 3. Worker/Pages 프로젝트 만들기
 
 1. `Workers & Pages`로 이동
 2. `Create application` 클릭
-3. `Pages` 선택
-4. `Connect to Git` 선택
+3. `Ship something new` 화면에서 `Continue with GitHub` 선택
 5. GitHub 저장소 선택:
 
 ```text
@@ -47,22 +46,29 @@ sungchulsnim/ai-poc-evaluation
 
 ```text
 Project name: ai-poc-evaluation
-Production branch: main
-Framework preset: None
 Build command: 비워둠
-Build output directory: public
-Root directory: /
+Deploy command: npx wrangler deploy
+Non-production branch deploy command: npx wrangler versions upload
+Path: /
 ```
 
-7. `Save and Deploy` 클릭
+7. API token은 `Create new token` 그대로 둡니다.
+8. Variables에 아래 2개를 추가합니다.
+
+```text
+ADMIN_PASSWORD = 원하는 관리자 비밀번호
+SESSION_SECRET = 아무 긴 문자열
+```
+
+9. 저장하고 배포합니다.
 
 ## 4. D1 바인딩 연결
 
-Pages 프로젝트 생성 후:
+프로젝트 생성 후:
 
 1. `Settings` 탭
-2. `Functions` 메뉴
-3. `D1 database bindings` 찾기
+2. `Variables and Secrets` 또는 `Bindings` 메뉴
+3. `D1 database binding` 찾기
 4. `Add binding` 클릭
 5. 아래처럼 입력:
 
@@ -73,25 +79,9 @@ D1 database: ai-poc-evaluation
 
 6. 저장
 
-## 5. 관리자 비밀번호 설정
-
-같은 `Settings` 화면에서 환경변수를 추가합니다.
-
-```text
-ADMIN_PASSWORD = 원하는 관리자 비밀번호
-SESSION_SECRET = 아무 긴 문자열
-```
-
-예:
-
-```text
-ADMIN_PASSWORD = SamsungAI2026!
-SESSION_SECRET = ai-poc-workshop-session-secret-2026
-```
-
 저장 후 `Deployments` 탭에서 최신 배포를 다시 배포합니다.
 
-## 6. 사용할 주소
+## 5. 사용할 주소
 
 Cloudflare가 아래와 비슷한 주소를 줍니다.
 
