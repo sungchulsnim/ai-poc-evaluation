@@ -1,4 +1,4 @@
-const config = {
+const DEFAULT_CONFIG = {
   contestName: "AI POC 산출물 평가",
   expectedVoters: 110,
   scoreMultiplier: 5,
@@ -30,7 +30,8 @@ const config = {
     { id: "group2", name: "2그룹", excludedProjectIds: [] },
     { id: "group3", name: "3그룹", excludedProjectIds: [] },
     { id: "group4", name: "4그룹", excludedProjectIds: [] },
-    { id: "group5", name: "5그룹", excludedProjectIds: [] }
+    { id: "group5", name: "5그룹", excludedProjectIds: [] },
+    { id: "group6", name: "6그룹", excludedProjectIds: [] }
   ],
   projects: [
     { id: "project01", title: "손익분석 대시보드" },
@@ -49,9 +50,6 @@ const config = {
   ]
 };
 
-const groups = config.groups.map((group, index) => ({ ...group, order: index + 1 }));
-const projects = config.projects.map((project, index) => ({ ...project, order: index + 1 }));
-
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
@@ -59,13 +57,7 @@ export async function onRequest(context) {
 
   try {
     if (request.method === "GET" && apiPath === "health") {
-      return json({ ok: true, service: config.contestName });
-    }
-
-    if (request.method === "GET" && apiPath === "config") {
-      const groupId = url.searchParams.get("group") || "";
-      if (!getGroup(groupId)) return json({ ok: false, message: "유효하지 않은 그룹 링크입니다." }, 404);
-      return json({ ok: true, ...publicConfig(groupId) });
+      return json({ ok: true, service: DEFAULT_CONFIG.contestName });
     }
 
     if (request.method === "POST" && apiPath === "admin/login") {
@@ -84,14 +76,25 @@ export async function onRequest(context) {
       });
     }
 
+    requireDb(env);
+    await initDb(env.DB);
+
+    if (request.method === "GET" && apiPath === "config") {
+      const appConfig = await getAppConfig(env.DB);
+      const groupId = url.searchParams.get("group") || "";
+      if (!getGroup(appConfig, groupId)) {
+        return json({ ok: false, message: "유효하지 않은 그룹 링크입니다." }, 404);
+      }
+      return json({ ok: true, ...publicConfig(appConfig, groupId) });
+    }
+
     if (request.method === "GET" && apiPath === "check") {
-      requireDb(env);
-      await initDb(env.DB);
+      const appConfig = await getAppConfig(env.DB);
       const clientKey = await getClientKey(request, {
         deviceId: url.searchParams.get("deviceId") || "",
         fingerprint: url.searchParams.get("fingerprint") || ""
       });
-      const duplicate = await findDuplicate(env.DB, clientKey);
+      const duplicate = await findDuplicate(env.DB, appConfig, clientKey);
       return json({
         ok: true,
         alreadyVoted: Boolean(duplicate),
@@ -101,14 +104,13 @@ export async function onRequest(context) {
     }
 
     if (request.method === "POST" && apiPath === "submit") {
-      requireDb(env);
-      await initDb(env.DB);
+      const appConfig = await getAppConfig(env.DB);
       const body = await readJson(request);
-      const validation = validateSubmission(body);
+      const validation = validateSubmission(appConfig, body);
       if (!validation.ok) return json({ ok: false, message: validation.message }, 400);
 
       const clientKey = await getClientKey(request, body);
-      const duplicate = await findDuplicate(env.DB, clientKey);
+      const duplicate = await findDuplicate(env.DB, appConfig, clientKey);
       if (duplicate) {
         return json({
           ok: false,
@@ -120,7 +122,7 @@ export async function onRequest(context) {
       const normalizedScores = {};
       for (const project of validation.eligibleProjects) {
         normalizedScores[project.id] = {};
-        for (const criterion of config.criteria) {
+        for (const criterion of appConfig.criteria) {
           normalizedScores[project.id][criterion.id] = Number(body.scores[project.id][criterion.id]);
         }
       }
@@ -160,18 +162,46 @@ export async function onRequest(context) {
       if (!(await isAdminAuthenticated(request, env))) {
         return json({ ok: false, message: "관리자 로그인이 필요합니다." }, 401);
       }
-      requireDb(env);
-      await initDb(env.DB);
-      return json({ ok: true, ...(await aggregateResults(env.DB)) });
+      const appConfig = await getAppConfig(env.DB);
+      return json({ ok: true, ...(await aggregateResults(env.DB, appConfig)) });
     }
 
     if (request.method === "GET" && apiPath === "export.csv") {
       if (!(await isAdminAuthenticated(request, env))) {
         return json({ ok: false, message: "관리자 로그인이 필요합니다." }, 401);
       }
-      requireDb(env);
-      await initDb(env.DB);
-      return text(await resultsCsv(env.DB), "text/csv; charset=utf-8");
+      const appConfig = await getAppConfig(env.DB);
+      return text(await resultsCsv(env.DB, appConfig), "text/csv; charset=utf-8");
+    }
+
+    if (request.method === "GET" && apiPath === "admin/settings") {
+      if (!(await isAdminAuthenticated(request, env))) {
+        return json({ ok: false, message: "관리자 로그인이 필요합니다." }, 401);
+      }
+      return json({ ok: true, ...(await getAppConfig(env.DB)) });
+    }
+
+    if (request.method === "POST" && apiPath === "admin/settings") {
+      if (!(await isAdminAuthenticated(request, env))) {
+        return json({ ok: false, message: "관리자 로그인이 필요합니다." }, 401);
+      }
+      const currentConfig = await getAppConfig(env.DB);
+      const body = await readJson(request);
+      const nextConfig = normalizeSubmittedConfig(currentConfig, body);
+      await saveAppConfig(env.DB, nextConfig);
+      return json({ ok: true, ...nextConfig });
+    }
+
+    if (request.method === "POST" && apiPath === "admin/reset-votes") {
+      if (!(await isAdminAuthenticated(request, env))) {
+        return json({ ok: false, message: "관리자 로그인이 필요합니다." }, 401);
+      }
+      const body = await readJson(request);
+      if (body.confirmText !== "초기화") {
+        return json({ ok: false, message: "초기화를 확인하려면 '초기화'를 입력해야 합니다." }, 400);
+      }
+      await env.DB.prepare("DELETE FROM submissions").run();
+      return json({ ok: true, message: "평가 정보가 초기화되었습니다." });
     }
 
     return json({ ok: false, message: "지원하지 않는 요청입니다." }, 404);
@@ -195,6 +225,13 @@ async function initDb(db) {
         scores_json TEXT NOT NULL
       )
     `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS app_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    `),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_submissions_ip ON submissions(ip)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_submissions_device ON submissions(device_hash)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_submissions_fingerprint ON submissions(fingerprint_hash)")
@@ -205,44 +242,170 @@ function requireDb(env) {
   if (!env.DB) throw new Error("Cloudflare D1 DB 바인딩이 필요합니다. 바인딩 이름은 DB로 설정해 주세요.");
 }
 
-function getGroup(groupId) {
-  return groups.find((group) => group.id === groupId);
+async function getAppConfig(db) {
+  const row = await db.prepare("SELECT value FROM app_settings WHERE key = ?").bind("app_config").first();
+  if (!row?.value) {
+    const initialConfig = normalizeConfig(DEFAULT_CONFIG);
+    await saveAppConfig(db, initialConfig);
+    return initialConfig;
+  }
+
+  try {
+    return normalizeConfig(JSON.parse(row.value));
+  } catch {
+    const fallbackConfig = normalizeConfig(DEFAULT_CONFIG);
+    await saveAppConfig(db, fallbackConfig);
+    return fallbackConfig;
+  }
 }
 
-function publicConfig(groupId) {
-  const group = getGroup(groupId);
-  const excludedIds = new Set(group.excludedProjectIds || []);
-  const eligibleProjects = projects.filter((project) => !excludedIds.has(project.id));
-  const excludedProjects = projects.filter((project) => excludedIds.has(project.id));
+async function saveAppConfig(db, appConfig) {
+  await db.prepare(`
+    INSERT INTO app_settings (key, value, updated_at)
+    VALUES (?, ?, ?)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+  `).bind("app_config", JSON.stringify(normalizeConfig(appConfig)), new Date().toISOString()).run();
+}
+
+function normalizeConfig(appConfig) {
+  const projectIds = new Set();
+  const projects = Array.isArray(appConfig.projects) && appConfig.projects.length
+    ? appConfig.projects
+    : DEFAULT_CONFIG.projects;
+
+  const normalizedProjects = projects
+    .map((project, index) => ({
+      id: safeId(project.id) || `project${String(index + 1).padStart(2, "0")}`,
+      title: String(project.title || "").trim(),
+      order: index + 1
+    }))
+    .filter((project) => project.title)
+    .filter((project) => {
+      if (projectIds.has(project.id)) return false;
+      projectIds.add(project.id);
+      return true;
+    });
+
+  const validProjectIds = new Set(normalizedProjects.map((project) => project.id));
+  const inputGroups = Array.isArray(appConfig.groups) ? appConfig.groups : DEFAULT_CONFIG.groups;
+  const normalizedGroups = DEFAULT_CONFIG.groups.map((defaultGroup, index) => {
+    const source = inputGroups.find((group) => group.id === defaultGroup.id) || defaultGroup;
+    const excludedProjectIds = Array.isArray(source.excludedProjectIds) ? source.excludedProjectIds : [];
+    return {
+      id: defaultGroup.id,
+      name: String(source.name || defaultGroup.name).trim() || defaultGroup.name,
+      excludedProjectIds: [...new Set(excludedProjectIds.filter((projectId) => validProjectIds.has(projectId)))],
+      order: index + 1
+    };
+  });
 
   return {
-    contestName: config.contestName,
-    expectedVoters: config.expectedVoters,
-    scoreMultiplier: config.scoreMultiplier,
-    scoreRange: { min: 1, max: 5 },
-    rawScoreRange: { min: config.criteria.length, max: config.criteria.length * 5 },
-    finalScoreRange: {
-      min: config.criteria.length * config.scoreMultiplier,
-      max: config.criteria.length * 5 * config.scoreMultiplier
-    },
-    criteria: config.criteria,
-    group,
-    excludedProjects,
-    projects: eligibleProjects,
-    allProjects: projects,
-    groupCount: groups.length
+    contestName: String(appConfig.contestName || DEFAULT_CONFIG.contestName),
+    expectedVoters: Number(appConfig.expectedVoters || DEFAULT_CONFIG.expectedVoters),
+    scoreMultiplier: Number(appConfig.scoreMultiplier || DEFAULT_CONFIG.scoreMultiplier),
+    duplicatePolicy: appConfig.duplicatePolicy || DEFAULT_CONFIG.duplicatePolicy,
+    criteria: DEFAULT_CONFIG.criteria,
+    groups: normalizedGroups,
+    projects: normalizedProjects
   };
 }
 
-function validateSubmission(body) {
-  const group = getGroup(body.groupId);
+function normalizeSubmittedConfig(currentConfig, body) {
+  const currentByTitle = new Map(currentConfig.projects.map((project) => [normalizeTitle(project.title), project.id]));
+  const currentIds = new Set(currentConfig.projects.map((project) => project.id));
+  const seenIds = new Set();
+
+  const submittedProjects = Array.isArray(body.projects) ? body.projects : [];
+  const projects = submittedProjects
+    .map((project) => {
+      const title = String(project.title || "").trim();
+      if (!title) return null;
+
+      let id = safeId(project.id);
+      if (!id || !currentIds.has(id)) {
+        id = currentByTitle.get(normalizeTitle(title)) || `project-${crypto.randomUUID()}`;
+      }
+      if (seenIds.has(id)) id = `project-${crypto.randomUUID()}`;
+      seenIds.add(id);
+
+      return { id, title };
+    })
+    .filter(Boolean);
+
+  if (!projects.length) throw new Error("과제는 최소 1개 이상 필요합니다.");
+
+  const validProjectIds = new Set(projects.map((project) => project.id));
+  const submittedGroups = Array.isArray(body.groups) ? body.groups : [];
+  const currentGroupMap = new Map(currentConfig.groups.map((group) => [group.id, group]));
+
+  const groups = DEFAULT_CONFIG.groups.map((defaultGroup) => {
+    const submittedGroup = submittedGroups.find((group) => group.id === defaultGroup.id);
+    const currentGroup = currentGroupMap.get(defaultGroup.id) || defaultGroup;
+    const excludedProjectIds = Array.isArray(submittedGroup?.excludedProjectIds)
+      ? submittedGroup.excludedProjectIds
+      : currentGroup.excludedProjectIds;
+
+    return {
+      id: defaultGroup.id,
+      name: String(submittedGroup?.name || currentGroup.name || defaultGroup.name).trim() || defaultGroup.name,
+      excludedProjectIds: [...new Set(excludedProjectIds.filter((projectId) => validProjectIds.has(projectId)))]
+    };
+  });
+
+  return normalizeConfig({
+    ...currentConfig,
+    projects,
+    groups
+  });
+}
+
+function safeId(value) {
+  const textValue = String(value || "").trim();
+  return /^[a-zA-Z0-9_-]+$/.test(textValue) ? textValue : "";
+}
+
+function normalizeTitle(value) {
+  return String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function getGroup(appConfig, groupId) {
+  return appConfig.groups.find((group) => group.id === groupId);
+}
+
+function publicConfig(appConfig, groupId) {
+  const group = getGroup(appConfig, groupId);
+  const excludedIds = new Set(group.excludedProjectIds || []);
+  const eligibleProjects = appConfig.projects.filter((project) => !excludedIds.has(project.id));
+  const excludedProjects = appConfig.projects.filter((project) => excludedIds.has(project.id));
+
+  return {
+    contestName: appConfig.contestName,
+    expectedVoters: appConfig.expectedVoters,
+    scoreMultiplier: appConfig.scoreMultiplier,
+    scoreRange: { min: 1, max: 5 },
+    rawScoreRange: { min: appConfig.criteria.length, max: appConfig.criteria.length * 5 },
+    finalScoreRange: {
+      min: appConfig.criteria.length * appConfig.scoreMultiplier,
+      max: appConfig.criteria.length * 5 * appConfig.scoreMultiplier
+    },
+    criteria: appConfig.criteria,
+    group,
+    excludedProjects,
+    projects: eligibleProjects,
+    allProjects: appConfig.projects,
+    groupCount: appConfig.groups.length
+  };
+}
+
+function validateSubmission(appConfig, body) {
+  const group = getGroup(appConfig, body.groupId);
   if (!group) return { ok: false, message: "유효하지 않은 그룹 링크입니다." };
   if (!body.scores || typeof body.scores !== "object") {
     return { ok: false, message: "평가 점수가 없습니다." };
   }
 
   const excludedIds = new Set(group.excludedProjectIds || []);
-  const eligibleProjects = projects.filter((project) => !excludedIds.has(project.id));
+  const eligibleProjects = appConfig.projects.filter((project) => !excludedIds.has(project.id));
   const eligibleIds = new Set(eligibleProjects.map((project) => project.id));
   const submittedIds = Object.keys(body.scores);
 
@@ -255,7 +418,7 @@ function validateSubmission(body) {
       return { ok: false, message: "평가 대상이 아닌 과제가 포함되어 있습니다." };
     }
     const row = body.scores[projectId];
-    for (const criterion of config.criteria) {
+    for (const criterion of appConfig.criteria) {
       const value = Number(row?.[criterion.id]);
       if (!Number.isInteger(value) || value < 1 || value > 5) {
         return { ok: false, message: `${projectId}의 ${criterion.title} 점수가 올바르지 않습니다.` };
@@ -266,22 +429,22 @@ function validateSubmission(body) {
   return { ok: true, group, eligibleProjects };
 }
 
-async function aggregateResults(db) {
+async function aggregateResults(db, appConfig) {
   const rows = await db.prepare("SELECT * FROM submissions ORDER BY created_at ASC").all();
   const submissions = rows.results || [];
   const byProject = new Map(
-    projects.map((project) => [
+    appConfig.projects.map((project) => [
       project.id,
       {
         ...project,
         voteCount: 0,
         rawTotalSum: 0,
         finalScoreSum: 0,
-        criteriaSums: Object.fromEntries(config.criteria.map((criterion) => [criterion.id, 0]))
+        criteriaSums: Object.fromEntries(appConfig.criteria.map((criterion) => [criterion.id, 0]))
       }
     ])
   );
-  const groupVoteCounts = Object.fromEntries(groups.map((group) => [group.id, 0]));
+  const groupVoteCounts = Object.fromEntries(appConfig.groups.map((group) => [group.id, 0]));
 
   for (const submission of submissions) {
     if (groupVoteCounts[submission.group_id] !== undefined) {
@@ -298,14 +461,14 @@ async function aggregateResults(db) {
     for (const [projectId, scoreRow] of Object.entries(scores)) {
       const row = byProject.get(projectId);
       if (!row) continue;
-      const rawTotal = config.criteria.reduce((sum, criterion) => {
+      const rawTotal = appConfig.criteria.reduce((sum, criterion) => {
         const value = Number(scoreRow[criterion.id] || 0);
         row.criteriaSums[criterion.id] += value;
         return sum + value;
       }, 0);
       row.voteCount += 1;
       row.rawTotalSum += rawTotal;
-      row.finalScoreSum += rawTotal * config.scoreMultiplier;
+      row.finalScoreSum += rawTotal * appConfig.scoreMultiplier;
     }
   }
 
@@ -317,7 +480,7 @@ async function aggregateResults(db) {
     rawAverage: row.voteCount ? round(row.rawTotalSum / row.voteCount, 2) : 0,
     finalAverage: row.voteCount ? round(row.finalScoreSum / row.voteCount, 2) : 0,
     criteriaAverage: Object.fromEntries(
-      config.criteria.map((criterion) => [
+      appConfig.criteria.map((criterion) => [
         criterion.id,
         row.voteCount ? round(row.criteriaSums[criterion.id] / row.voteCount, 2) : 0
       ])
@@ -330,16 +493,16 @@ async function aggregateResults(db) {
   });
 
   return {
-    contestName: config.contestName,
-    expectedVoters: config.expectedVoters,
-    groupCount: groups.length,
-    projectCount: projects.length,
-    criteria: config.criteria,
-    scoreMultiplier: config.scoreMultiplier,
+    contestName: appConfig.contestName,
+    expectedVoters: appConfig.expectedVoters,
+    groupCount: appConfig.groups.length,
+    projectCount: appConfig.projects.length,
+    criteria: appConfig.criteria,
+    scoreMultiplier: appConfig.scoreMultiplier,
     submissionCount: submissions.length,
     groupVoteCounts,
     rows: resultRows,
-    links: groups.map((group) => ({
+    links: appConfig.groups.map((group) => ({
       id: group.id,
       name: group.name,
       excludedProjectCount: group.excludedProjectIds?.length || 0,
@@ -348,15 +511,15 @@ async function aggregateResults(db) {
   };
 }
 
-async function resultsCsv(db) {
-  const results = await aggregateResults(db);
+async function resultsCsv(db, appConfig) {
+  const results = await aggregateResults(db, appConfig);
   const headers = [
     "순위",
     "과제명",
     "투표수",
     "최종 평균(100점)",
     "원점수 평균(20점)",
-    ...config.criteria.map((criterion) => `${criterion.title} 평균(5점)`)
+    ...appConfig.criteria.map((criterion) => `${criterion.title} 평균(5점)`)
   ];
   const lines = [headers];
   for (const row of results.rows) {
@@ -366,14 +529,14 @@ async function resultsCsv(db) {
       row.voteCount,
       row.finalAverage,
       row.rawAverage,
-      ...config.criteria.map((criterion) => row.criteriaAverage[criterion.id])
+      ...appConfig.criteria.map((criterion) => row.criteriaAverage[criterion.id])
     ]);
   }
   return `\uFEFF${lines.map((line) => line.map(escapeCsv).join(",")).join("\r\n")}`;
 }
 
-async function findDuplicate(db, clientKey) {
-  const policy = config.duplicatePolicy || "deviceOrIp";
+async function findDuplicate(db, appConfig, clientKey) {
+  const policy = appConfig.duplicatePolicy || "deviceOrIp";
   const clauses = [];
   const bindings = [];
 

@@ -10,9 +10,9 @@
     <header class="vote-header">
       <div>
         <p class="eyebrow" id="teamName">AI POC Workshop</p>
-        <h1 id="pageTitle">산출물 평가</h1>
+        <h1 id="pageTitle">AI 산출물 평가</h1>
       </div>
-      <div class="score-chip">1점-5점</div>
+      <div class="score-chip">5점-1점</div>
     </header>
 
     <main class="vote-main">
@@ -35,8 +35,11 @@
         <div class="project-list" id="projectList"></div>
 
         <div class="submit-bar">
-          <button class="primary-button" id="submitButton" type="submit" disabled>평가 제출</button>
-          <p id="submitHint">모든 항목을 입력하면 제출할 수 있습니다.</p>
+          <div class="submit-actions">
+            <button class="ghost-button" id="draftButton" type="button">임시저장</button>
+            <button class="primary-button" id="submitButton" type="submit" disabled>최종제출</button>
+          </div>
+          <p id="submitHint">모든 항목을 입력하면 최종제출할 수 있습니다.</p>
         </div>
       </form>
     </main>

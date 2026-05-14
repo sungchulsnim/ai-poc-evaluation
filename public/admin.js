@@ -4,26 +4,46 @@ const resultBody = document.querySelector("#resultBody");
 const linkList = document.querySelector("#linkList");
 const refreshButton = document.querySelector("#refreshButton");
 const logoutButton = document.querySelector("#logoutButton");
+const projectEditorList = document.querySelector("#projectEditorList");
+const groupSettingsList = document.querySelector("#groupSettingsList");
+const addProjectButton = document.querySelector("#addProjectButton");
+const saveSettingsButton = document.querySelector("#saveSettingsButton");
+const settingsMessage = document.querySelector("#settingsMessage");
+const resetVotesButton = document.querySelector("#resetVotesButton");
+const resetMessage = document.querySelector("#resetMessage");
 
-refreshButton.addEventListener("click", loadResults);
+let settings = null;
+
+refreshButton.addEventListener("click", loadAll);
 logoutButton.addEventListener("click", async () => {
   await fetch("/api/admin/logout", { method: "POST" });
   location.href = "/login";
 });
-await loadResults().catch(showLoadError);
+addProjectButton.addEventListener("click", addProjectRow);
+saveSettingsButton.addEventListener("click", saveSettings);
+resetVotesButton.addEventListener("click", resetVotes);
 
-async function loadResults() {
-  const response = await fetch("/api/results", { cache: "no-store" });
+await loadAll().catch(showLoadError);
+
+async function loadAll() {
+  const [results, appSettings] = await Promise.all([fetchJson("/api/results"), fetchJson("/api/admin/settings")]);
+  settings = appSettings;
+  document.title = `${results.contestName} 관리자`;
+  renderSummary(results);
+  renderResults(results);
+  renderSettings(appSettings);
+  renderLinks(results);
+}
+
+async function fetchJson(url) {
+  const response = await fetch(url, { cache: "no-store" });
   if (response.status === 401) {
     location.href = "/login";
-    return;
+    return new Promise(() => {});
   }
   const data = await response.json();
-  if (!data.ok) throw new Error(data.message || "결과를 불러오지 못했습니다.");
-  document.title = `${data.contestName} 관리자`;
-  renderSummary(data);
-  renderResults(data);
-  renderLinks(data);
+  if (!data.ok) throw new Error(data.message || "데이터를 불러오지 못했습니다.");
+  return data;
 }
 
 function showLoadError(error) {
@@ -81,6 +101,168 @@ function renderResults(data) {
       </tr>
     `;
   }).join("");
+}
+
+function renderSettings(data) {
+  renderProjectEditor(data.projects);
+  renderGroupSettings(data.groups, data.projects);
+}
+
+function renderProjectEditor(projects) {
+  projectEditorList.innerHTML = projects.map((project, index) => `
+    <div class="project-editor-row" data-project-id="${escapeAttr(project.id)}">
+      <span class="row-number">${index + 1}</span>
+      <input type="text" value="${escapeAttr(project.title)}" aria-label="과제명">
+      <button class="ghost-button icon-button" type="button" data-remove-project="${escapeAttr(project.id)}">삭제</button>
+    </div>
+  `).join("");
+
+  projectEditorList.querySelectorAll("[data-remove-project]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const row = button.closest("[data-project-id]");
+      row.remove();
+      renumberProjectRows();
+      syncGroupProjectOptions();
+    });
+  });
+
+  projectEditorList.querySelectorAll("input").forEach((input) => {
+    input.addEventListener("input", syncGroupProjectOptions);
+  });
+}
+
+function renderGroupSettings(groups, projects) {
+  groupSettingsList.innerHTML = groups.map((group) => groupSettingsHtml(group, projects)).join("");
+}
+
+function groupSettingsHtml(group, projects) {
+  const excludedIds = new Set(group.excludedProjectIds || []);
+  const rows = projects.map((project) => `
+    <label class="exclude-row" data-project-option="${escapeAttr(project.id)}">
+      <input type="checkbox" value="${escapeAttr(project.id)}" ${excludedIds.has(project.id) ? "checked" : ""}>
+      <span>${escapeHtml(project.title)}</span>
+    </label>
+  `).join("");
+
+  return `
+    <article class="group-settings-card" data-group-id="${escapeAttr(group.id)}">
+      <header>
+        <strong>${escapeHtml(group.name)}</strong>
+        <span class="muted">${escapeHtml(group.id)}</span>
+      </header>
+      <div class="exclude-list">${rows}</div>
+    </article>
+  `;
+}
+
+function addProjectRow() {
+  const project = { id: `project-${crypto.randomUUID()}`, title: "" };
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = `
+    <div class="project-editor-row" data-project-id="${escapeAttr(project.id)}">
+      <span class="row-number"></span>
+      <input type="text" value="" aria-label="과제명" placeholder="새 과제명">
+      <button class="ghost-button icon-button" type="button" data-remove-project="${escapeAttr(project.id)}">삭제</button>
+    </div>
+  `;
+  const row = wrapper.firstElementChild;
+  projectEditorList.append(row);
+  row.querySelector("[data-remove-project]").addEventListener("click", () => {
+    row.remove();
+    renumberProjectRows();
+    syncGroupProjectOptions();
+  });
+  row.querySelector("input").addEventListener("input", syncGroupProjectOptions);
+  row.querySelector("input").focus();
+  renumberProjectRows();
+  syncGroupProjectOptions();
+}
+
+function renumberProjectRows() {
+  projectEditorList.querySelectorAll(".project-editor-row").forEach((row, index) => {
+    row.querySelector(".row-number").textContent = index + 1;
+  });
+}
+
+function syncGroupProjectOptions() {
+  const projects = collectProjects();
+  const groups = collectGroups();
+  renderGroupSettings(groups, projects);
+}
+
+async function saveSettings() {
+  settingsMessage.textContent = "";
+  const projects = collectProjects();
+  if (!projects.length) {
+    settingsMessage.textContent = "과제는 최소 1개 이상 필요합니다.";
+    return;
+  }
+
+  const payload = {
+    projects,
+    groups: collectGroups()
+  };
+
+  saveSettingsButton.disabled = true;
+  saveSettingsButton.textContent = "저장 중";
+  try {
+    const response = await fetch("/api/admin/settings", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    if (!data.ok) throw new Error(data.message || "설정을 저장하지 못했습니다.");
+    settingsMessage.textContent = "설정이 저장되었습니다.";
+    await loadAll();
+  } catch (error) {
+    settingsMessage.textContent = error.message || "설정을 저장하지 못했습니다.";
+  } finally {
+    saveSettingsButton.disabled = false;
+    saveSettingsButton.textContent = "설정 저장";
+  }
+}
+
+async function resetVotes() {
+  resetMessage.textContent = "";
+  const confirmText = prompt("제출된 모든 평가 정보를 삭제합니다. 계속하려면 '초기화'를 입력하세요.");
+  if (confirmText === null) return;
+
+  resetVotesButton.disabled = true;
+  resetVotesButton.textContent = "초기화 중";
+  try {
+    const response = await fetch("/api/admin/reset-votes", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ confirmText })
+    });
+    const data = await response.json();
+    if (!data.ok) throw new Error(data.message || "초기화하지 못했습니다.");
+    resetMessage.textContent = "평가 정보가 초기화되었습니다.";
+    await loadAll();
+  } catch (error) {
+    resetMessage.textContent = error.message || "초기화하지 못했습니다.";
+  } finally {
+    resetVotesButton.disabled = false;
+    resetVotesButton.textContent = "처음부터 다시시작";
+  }
+}
+
+function collectProjects() {
+  return [...projectEditorList.querySelectorAll(".project-editor-row")]
+    .map((row) => ({
+      id: row.dataset.projectId,
+      title: row.querySelector("input").value.trim()
+    }))
+    .filter((project) => project.title);
+}
+
+function collectGroups() {
+  return [...groupSettingsList.querySelectorAll("[data-group-id]")].map((card) => ({
+    id: card.dataset.groupId,
+    name: settings.groups.find((group) => group.id === card.dataset.groupId)?.name || card.dataset.groupId,
+    excludedProjectIds: [...card.querySelectorAll("input[type='checkbox']:checked")].map((input) => input.value)
+  }));
 }
 
 function renderLinks(data) {

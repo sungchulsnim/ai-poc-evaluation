@@ -50,6 +50,11 @@
       "id": "group5",
       "name": "5그룹",
       "excludedProjectIds": []
+    },
+    {
+      "id": "group6",
+      "name": "6그룹",
+      "excludedProjectIds": []
     }
   ],
   "projects": [

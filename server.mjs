@@ -343,7 +343,7 @@ async function serveStatic(req, res, pathname) {
   if (pathname === "/admin") filePath = path.join(publicDir, "admin.html");
   if (pathname === "/login") filePath = path.join(publicDir, "login.html");
   if (pathname.startsWith("/vote/")) filePath = path.join(publicDir, "vote.html");
-  if (/^\/group[1-5]$/.test(pathname)) filePath = path.join(publicDir, "vote.html");
+  if (/^\/group[1-6]$/.test(pathname)) filePath = path.join(publicDir, "vote.html");
 
   const normalized = path.normalize(filePath);
   if (!normalized.startsWith(publicDir)) {

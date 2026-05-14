@@ -10,6 +10,7 @@ const projectList = document.querySelector("#projectList");
 const progressText = document.querySelector("#progressText");
 const progressDetail = document.querySelector("#progressDetail");
 const submitButton = document.querySelector("#submitButton");
+const draftButton = document.querySelector("#draftButton");
 const submitHint = document.querySelector("#submitHint");
 const findMissingButton = document.querySelector("#findMissingButton");
 
@@ -25,6 +26,7 @@ try {
     showDone(duplicate.votedAt);
   } else {
     restoreDraft();
+    pruneAnswers();
     renderForm();
   }
 } catch (error) {
@@ -51,9 +53,9 @@ function renderHeader() {
   teamName.textContent = `${config.group.name} 평가 링크`;
   pageTitle.textContent = "AI 산출물 평가";
   if (config.excludedProjects.length) {
-    showNotice(`해당 그룹 과제는 평가 대상에서 제외됩니다. 제외 과제: ${config.excludedProjects.map((project) => project.title).join(", ")}`, false);
+    showNotice(`제외 과제: ${config.excludedProjects.map((project) => project.title).join(", ")}`, false);
   } else {
-    showNotice("각 과제별 4개 항목을 1점부터 5점까지 평가해 주세요.", false);
+    showNotice("각 과제별 4개 항목을 5점부터 1점까지 평가해 주세요.", false);
   }
 }
 
@@ -62,6 +64,10 @@ function renderForm() {
   projectList.innerHTML = config.projects.map((project, index) => renderProject(project, index)).join("");
   projectList.addEventListener("change", handleScoreChange);
   voteForm.addEventListener("submit", submitVote);
+  draftButton.addEventListener("click", () => {
+    saveDraft();
+    showNotice("임시저장되었습니다. 최종제출 전까지 이 기기에서 다시 열면 이어서 입력할 수 있습니다.", false);
+  });
   findMissingButton.addEventListener("click", scrollToFirstMissing);
   updateProgress();
 }
@@ -69,11 +75,10 @@ function renderForm() {
 function renderProject(project, index) {
   const criteriaHtml = config.criteria.map((criterion) => {
     const currentValue = answers[project.id]?.[criterion.id] || "";
-    const options = [1, 2, 3, 4, 5].map((score) => {
-      const inputId = `${project.id}-${criterion.id}-${score}`;
+    const options = [5, 4, 3, 2, 1].map((score) => {
       const checked = Number(currentValue) === score ? "checked" : "";
       return `
-        <label>
+        <label class="score-label">
           <input type="radio" name="${project.id}-${criterion.id}" value="${score}" data-project="${project.id}" data-criterion="${criterion.id}" ${checked}>
           <span class="score-option">${score}</span>
         </label>
@@ -81,23 +86,25 @@ function renderProject(project, index) {
     }).join("");
 
     return `
-      <fieldset class="criterion">
-        <legend>
-          <span class="criterion-title">${escapeHtml(criterion.title)}</span>
-          <span class="criterion-question">${escapeHtml(criterion.question)}</span>
-        </legend>
-        <div class="score-options">${options}</div>
-      </fieldset>
+      <div class="score-row">
+        <div class="score-criterion">${escapeHtml(criterion.title)}</div>
+        <div class="score-options compact-options">${options}</div>
+      </div>
     `;
   }).join("");
 
   return `
-    <article class="project-card" data-project-card="${project.id}">
+    <article class="project-card compact-project" data-project-card="${project.id}">
       <header>
         <p class="eyebrow">${index + 1} / ${config.projects.length}</p>
         <h3>${escapeHtml(project.title)}</h3>
       </header>
-      <div class="criteria-list">${criteriaHtml}</div>
+      <div class="criteria-list compact-list">
+        <div class="score-header" aria-hidden="true">
+          <span></span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+        </div>
+        ${criteriaHtml}
+      </div>
     </article>
   `;
 }
@@ -125,7 +132,7 @@ function updateProgress() {
   submitButton.disabled = answered !== total;
   submitHint.textContent = answered === total
     ? `원점수 ${config.rawScoreRange.min}-${config.rawScoreRange.max}점, 최종점수 ${config.finalScoreRange.min}-${config.finalScoreRange.max}점으로 환산됩니다.`
-    : "모든 항목을 입력하면 제출할 수 있습니다.";
+    : "임시저장은 언제든 가능하고, 모든 항목 입력 후 최종제출할 수 있습니다.";
 
   document.querySelectorAll("[data-project-card]").forEach((card) => {
     card.classList.toggle("incomplete", !isProjectComplete(card.dataset.projectCard));
@@ -151,6 +158,9 @@ async function submitVote(event) {
     return;
   }
 
+  const confirmed = confirm("최종제출 후에는 수정할 수 없습니다. 제출하시겠습니까?");
+  if (!confirmed) return;
+
   submitButton.disabled = true;
   submitButton.textContent = "제출 중";
 
@@ -168,7 +178,7 @@ async function submitVote(event) {
 
   if (!data.ok) {
     showNotice(data.message || "제출하지 못했습니다.", true);
-    submitButton.textContent = "평가 제출";
+    submitButton.textContent = "최종제출";
     updateProgress();
     return;
   }
@@ -217,15 +227,31 @@ async function buildFingerprint() {
 }
 
 function saveDraft() {
-  localStorage.setItem(draftKey(), JSON.stringify(answers));
+  localStorage.setItem(draftKey(), JSON.stringify({ answers, savedAt: new Date().toISOString() }));
 }
 
 function restoreDraft() {
   try {
-    answers = JSON.parse(localStorage.getItem(draftKey()) || "{}");
+    const saved = JSON.parse(localStorage.getItem(draftKey()) || "{}");
+    answers = saved.answers || saved || {};
   } catch {
     answers = {};
   }
+}
+
+function pruneAnswers() {
+  const validProjectIds = new Set(config.projects.map((project) => project.id));
+  const validCriterionIds = new Set(config.criteria.map((criterion) => criterion.id));
+  answers = Object.fromEntries(
+    Object.entries(answers)
+      .filter(([projectId]) => validProjectIds.has(projectId))
+      .map(([projectId, scoreRow]) => [
+        projectId,
+        Object.fromEntries(
+          Object.entries(scoreRow || {}).filter(([criterionId]) => validCriterionIds.has(criterionId))
+        )
+      ])
+  );
 }
 
 function draftKey() {

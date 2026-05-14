@@ -23,6 +23,6 @@ function routeAssetPath(pathname) {
   if (pathname === "/" || pathname === "/admin") return "/admin.html";
   if (pathname === "/login") return "/login.html";
   if (pathname.startsWith("/vote/")) return "/vote.html";
-  if (/^\/group[1-5]$/.test(pathname)) return `${pathname}.html`;
+  if (/^\/group[1-6]$/.test(pathname)) return `${pathname}.html`;
   return pathname;
 }
