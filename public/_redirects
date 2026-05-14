@@ -1,3 +1,0 @@
-/admin /admin.html 200
-/login /login.html 200
-/vote/* /vote.html 200
