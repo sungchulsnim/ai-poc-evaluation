@@ -179,6 +179,15 @@ h3 {
   font-size: 14px;
 }
 
+.error-metric {
+  grid-column: 1 / -1;
+  border-color: rgba(204, 63, 74, 0.58);
+}
+
+.error-metric strong {
+  color: var(--red);
+}
+
 .panel {
   margin-top: 18px;
   padding: 18px;

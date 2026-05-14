@@ -10,7 +10,7 @@ logoutButton.addEventListener("click", async () => {
   await fetch("/api/admin/logout", { method: "POST" });
   location.href = "/login";
 });
-await loadResults();
+await loadResults().catch(showLoadError);
 
 async function loadResults() {
   const response = await fetch("/api/results", { cache: "no-store" });
@@ -24,6 +24,17 @@ async function loadResults() {
   renderSummary(data);
   renderResults(data);
   renderLinks(data);
+}
+
+function showLoadError(error) {
+  summaryGrid.innerHTML = `
+    <article class="metric error-metric">
+      <strong>확인 필요</strong>
+      <span>${escapeHtml(error.message || "대시보드 데이터를 불러오지 못했습니다.")}</span>
+    </article>
+  `;
+  resultBody.innerHTML = "";
+  linkList.innerHTML = "";
 }
 
 function renderSummary(data) {
