@@ -427,9 +427,13 @@ async function isAdminAuthenticated(request, env) {
   if (!password) return false;
   const cookie = parseCookies(request).admin_session;
   if (!cookie) return false;
-  const [role, expires, signature] = cookie.split(".");
+  const dotIndex = cookie.lastIndexOf(".");
+  if (dotIndex === -1) return false;
+  const payload = cookie.slice(0, dotIndex);
+  const signature = cookie.slice(dotIndex + 1);
+  const [role, expires] = payload.split(":");
   if (role !== "admin" || !expires || !signature || Number(expires) < Date.now()) return false;
-  const expected = await sign(`${role}:${expires}`, env);
+  const expected = await sign(payload, env);
   return timingSafeEqual(signature, expected);
 }
 
