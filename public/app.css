@@ -699,8 +699,8 @@ h3 {
 .score-header,
 .score-row {
   display: grid;
-  grid-template-columns: minmax(94px, 1fr) repeat(5, 42px);
-  gap: 6px;
+  grid-template-columns: minmax(108px, 1fr) repeat(5, 36px);
+  gap: 3px;
   align-items: center;
 }
 
@@ -720,9 +720,10 @@ h3 {
 
 .score-criterion {
   color: var(--ink);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   line-height: 1.25;
+  white-space: nowrap;
 }
 
 .compact-options,
@@ -756,8 +757,8 @@ h3 {
 @media (max-width: 420px) {
   .score-header,
   .score-row {
-    grid-template-columns: minmax(76px, 1fr) repeat(5, minmax(34px, 1fr));
-    gap: 4px;
+    grid-template-columns: minmax(98px, 1fr) repeat(5, minmax(30px, 34px));
+    gap: 2px;
   }
 
   .compact-project h3 {
@@ -765,7 +766,7 @@ h3 {
   }
 
   .score-criterion {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .compact-options .score-option {

@@ -52,11 +52,7 @@ function renderHeader() {
   document.title = config.contestName;
   teamName.textContent = `${config.group.name} 평가 링크`;
   pageTitle.textContent = "AI 산출물 평가";
-  if (config.excludedProjects.length) {
-    showNotice(`제외 과제: ${config.excludedProjects.map((project) => project.title).join(", ")}`, false);
-  } else {
-    showNotice("각 과제별 4개 항목을 5점부터 1점까지 평가해 주세요.", false);
-  }
+  showNotice("각 과제별 4개 항목을 5점부터 1점까지 평가해 주세요.", false);
 }
 
 function renderForm() {
