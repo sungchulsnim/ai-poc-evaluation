@@ -122,7 +122,7 @@ function applyImportedProjectsFromHash() {
   }
 
   const projects = titles
-    .map((title) => String(title || "").replace(/^\s*\d+[.)]\s*/, "").trim())
+    .map((title) => String(title || "").trim())
     .filter(Boolean)
     .map((title) => ({ id: `project-${crypto.randomUUID()}`, title }));
 
