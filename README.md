@@ -62,7 +62,13 @@ ipOnly      같은 IP이면 차단
 
 관리자 대시보드에서는 과제별 평균 점수와 항목별 평균을 확인하고 CSV로 내려받을 수 있습니다.
 
-## 외부 서버 배포
+## 무료 외부 서버 배포
+
+무료 운영은 Cloudflare Pages + D1을 권장합니다.
+
+[DEPLOY_CLOUDFLARE.md](DEPLOY_CLOUDFLARE.md)를 따라 진행하면 됩니다.
+
+## Render 배포
 
 외부 서버에서는 관리자 대시보드 보호를 위해 `ADMIN_PASSWORD` 환경 변수를 설정하세요.
 
@@ -86,4 +92,4 @@ docker build -t ai-poc-evaluation .
 docker run -p 8080:8080 -e ADMIN_PASSWORD=관리자비밀번호 -v ai-poc-votes:/data ai-poc-evaluation
 ```
 
-Render에 올릴 때는 [DEPLOY_RENDER.md](DEPLOY_RENDER.md)를 따르면 됩니다.
+Render에 올릴 때는 [DEPLOY_RENDER.md](DEPLOY_RENDER.md)를 따르면 됩니다. 단, 투표 데이터를 안정적으로 저장하려면 persistent disk가 필요해서 무료 플랜만으로는 적합하지 않습니다.

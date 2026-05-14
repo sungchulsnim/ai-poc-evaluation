@@ -1,0 +1,8 @@
+name = "ai-poc-evaluation"
+compatibility_date = "2026-05-14"
+pages_build_output_dir = "public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ai-poc-evaluation"
+database_id = "REPLACE_WITH_CLOUDFLARE_D1_DATABASE_ID"
