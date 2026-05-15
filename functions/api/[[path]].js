@@ -400,6 +400,12 @@ function publicConfig(appConfig, groupId) {
 function validateSubmission(appConfig, body) {
   const group = getGroup(appConfig, body.groupId);
   if (!group) return { ok: false, message: "유효하지 않은 그룹 링크입니다." };
+  if (body.finalSubmit !== true) {
+    return { ok: false, message: "최종제출 요청이 확인되지 않았습니다." };
+  }
+  if (!String(body.deviceId || "").trim()) {
+    return { ok: false, message: "단말 식별 정보가 없어 제출할 수 없습니다." };
+  }
   if (!body.scores || typeof body.scores !== "object") {
     return { ok: false, message: "평가 점수가 없습니다." };
   }
@@ -542,10 +548,6 @@ async function findDuplicate(db, appConfig, clientKey) {
   if (clientKey.deviceHash) {
     clauses.push("device_hash = ?");
     bindings.push(clientKey.deviceHash);
-  }
-  if (clientKey.fingerprintHash) {
-    clauses.push("fingerprint_hash = ?");
-    bindings.push(clientKey.fingerprintHash);
   }
 
   if (!clauses.length) return null;

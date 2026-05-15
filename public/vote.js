@@ -16,6 +16,8 @@ const findMissingButton = document.querySelector("#findMissingButton");
 
 let config;
 let answers = {};
+let submitIntent = false;
+let isSubmitting = false;
 
 try {
   config = await loadConfig();
@@ -60,7 +62,11 @@ function renderForm() {
   projectList.innerHTML = config.projects.map((project, index) => renderProject(project, index)).join("");
   projectList.addEventListener("change", handleScoreChange);
   voteForm.addEventListener("submit", submitVote);
+  submitButton.addEventListener("click", () => {
+    submitIntent = true;
+  });
   draftButton.addEventListener("click", () => {
+    submitIntent = false;
     saveDraft();
     const message = "임시저장되었습니다. 최종제출 전까지 이 기기에서 다시 열면 이어서 입력할 수 있습니다.";
     showNotice(message, false);
@@ -150,7 +156,15 @@ function scrollToFirstMissing() {
 
 async function submitVote(event) {
   event.preventDefault();
+  const isFinalSubmitClick = submitIntent;
+  submitIntent = false;
   updateProgress();
+
+  if (!isFinalSubmitClick) {
+    showNotice("최종제출은 아래 최종제출 버튼을 눌러야 진행됩니다.", false);
+    return;
+  }
+  if (isSubmitting) return;
   if (submitButton.disabled) {
     scrollToFirstMissing();
     return;
@@ -159,23 +173,35 @@ async function submitVote(event) {
   const confirmed = confirm("최종제출 후에는 수정할 수 없습니다. 제출하시겠습니까?");
   if (!confirmed) return;
 
+  isSubmitting = true;
   submitButton.disabled = true;
   submitButton.textContent = "제출 중";
 
-  const response = await fetch("/api/submit", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      groupId,
-      deviceId,
-      fingerprint,
-      scores: answers
-    })
-  });
-  const data = await response.json();
+  let data;
+  try {
+    const response = await fetch("/api/submit", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        groupId,
+        deviceId,
+        fingerprint,
+        finalSubmit: true,
+        scores: answers
+      })
+    });
+    data = await response.json();
+  } catch {
+    showNotice("네트워크 오류로 제출하지 못했습니다. 다시 시도해 주세요.", true);
+    isSubmitting = false;
+    submitButton.textContent = "최종제출";
+    updateProgress();
+    return;
+  }
 
   if (!data.ok) {
     showNotice(data.message || "제출하지 못했습니다.", true);
+    isSubmitting = false;
     submitButton.textContent = "최종제출";
     updateProgress();
     return;
