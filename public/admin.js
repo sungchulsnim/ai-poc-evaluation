@@ -137,6 +137,22 @@ async function applyImportedProjectsFromHash() {
     .map(parseImportedProjectTitle)
     .filter((project) => project.title);
 
+  const importedSettings = buildImportedSettings(importedProjects);
+  if (!importedSettings.projects.length) return false;
+
+  settings = { ...settings, ...importedSettings };
+  renderProjectEditor(importedSettings.projects);
+  renderGroupSettings(importedSettings.groups, importedSettings.projects);
+  settingsMessage.textContent = `사다리 최종순서와 그룹별 제외 과제를 반영했습니다. ${formatImportMarkerSummary(importedSettings.markerCounts)} 자동 저장 중입니다.`;
+  history.replaceState(null, "", location.pathname);
+  await saveSettings({
+    payload: importedSettings,
+    successMessage: `사다리 최종순서, 그룹별 제외 과제, 과제명 표식 제거가 저장되었습니다. ${formatImportMarkerSummary(importedSettings.markerCounts)}`
+  });
+  return true;
+}
+
+function buildImportedSettings(importedProjects) {
   const existingIdsByTitle = new Map(
     (settings.projects || []).map((project) => [normalizeImportedProjectTitle(project.title), project.id])
   );
@@ -145,31 +161,33 @@ async function applyImportedProjectsFromHash() {
     title: project.title
   }));
 
-  if (!projects.length) return;
+  const markerCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  const projectIdsByMarker = new Map();
+  importedProjects.forEach((project, index) => {
+    const marker = project.groupMarker;
+    if (marker < 1 || marker > 5) return;
+    markerCounts[marker] += 1;
+    if (!projectIdsByMarker.has(marker)) projectIdsByMarker.set(marker, []);
+    projectIdsByMarker.get(marker).push(projects[index].id);
+  });
 
-  const autoGroups = (settings.groups || []).map((group) => {
+  const groups = (settings.groups || []).map((group) => {
     const groupNumber = Number(String(group.id || "").match(/\d+/)?.[0] || 0);
-    const excludedProjectIds = groupNumber >= 1 && groupNumber <= 5
-      ? projects
-        .filter((project, index) => importedProjects[index].groupMarker === groupNumber)
-        .map((project) => project.id)
-      : [];
+    const excludedProjectIds = groupNumber >= 1 && groupNumber <= 5 ? projectIdsByMarker.get(groupNumber) || [] : [];
     return { ...group, excludedProjectIds };
   });
 
-  settings = { ...settings, projects, groups: autoGroups };
-  renderProjectEditor(projects);
-  renderGroupSettings(autoGroups, projects);
-  settingsMessage.textContent = "사다리 최종순서와 그룹별 제외 과제를 반영했습니다. 자동 저장 중입니다.";
-  history.replaceState(null, "", location.pathname);
-  await saveSettings({
-    successMessage: "사다리 최종순서, 그룹별 제외 과제, 과제명 표식 제거가 저장되었습니다."
-  });
-  return true;
+  return { projects, groups, markerCounts };
+}
+
+function formatImportMarkerSummary(markerCounts) {
+  return [1, 2, 3, 4, 5]
+    .map((groupNumber) => `${groupNumber}그룹 ${markerCounts[groupNumber] || 0}개`)
+    .join(", ");
 }
 
 function parseImportedProjectTitle(value) {
-  const rawTitle = String(value || "").trim();
+  const rawTitle = String(value || "").replace(/[\u200B\uFEFF]/g, "").trim();
   const marker = rawTitle.match(/\s*_(\d+)\s*$/);
   return {
     title: rawTitle.replace(/\s*_\d+\s*$/, "").trim(),
@@ -269,7 +287,7 @@ function syncGroupProjectOptions() {
 
 async function saveSettings(options = {}) {
   settingsMessage.textContent = "";
-  const projects = collectProjects();
+  const projects = options.payload?.projects || collectProjects();
   if (!projects.length) {
     settingsMessage.textContent = "과제는 최소 1개 이상 필요합니다.";
     return;
@@ -277,7 +295,7 @@ async function saveSettings(options = {}) {
 
   const payload = {
     projects,
-    groups: collectGroups()
+    groups: options.payload?.groups || collectGroups()
   };
 
   saveSettingsButton.disabled = true;
