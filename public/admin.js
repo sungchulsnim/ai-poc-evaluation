@@ -13,6 +13,12 @@ const resetVotesButton = document.querySelector("#resetVotesButton");
 const resetMessage = document.querySelector("#resetMessage");
 
 let settings = null;
+const DEFAULT_CRITERIA_WEIGHTS = {
+  businessEffect: 35,
+  workFit: 25,
+  aiQuality: 20,
+  scalability: 20
+};
 
 refreshButton.addEventListener("click", loadAll);
 logoutButton.addEventListener("click", async () => {
@@ -32,7 +38,7 @@ async function loadAll() {
   renderSummary(results);
   renderResults(results);
   renderSettings(appSettings);
-  applyImportedProjectsFromHash();
+  if (await applyImportedProjectsFromHash()) return;
   renderLinks(results);
 }
 
@@ -75,7 +81,13 @@ function metric(value, label) {
 }
 
 function renderResults(data) {
-  const criteriaHeaders = data.criteria.map((criterion) => `<th>${escapeHtml(criterion.title)}</th>`).join("");
+  const weights = data.criteriaWeights || DEFAULT_CRITERIA_WEIGHTS;
+  const criteriaHeaders = data.criteria.map((criterion) => `
+    <th class="criteria-weight-header">
+      <span>${escapeHtml(criterion.title)}</span>
+      <small>(${escapeHtml(weights[criterion.id] ?? 25)}%)</small>
+    </th>
+  `).join("");
   resultHead.innerHTML = `
     <tr>
       <th>순위</th>
@@ -109,10 +121,10 @@ function renderSettings(data) {
   renderGroupSettings(data.groups, data.projects);
 }
 
-function applyImportedProjectsFromHash() {
+async function applyImportedProjectsFromHash() {
   const params = new URLSearchParams(location.hash.replace(/^#/, ""));
   const rawProjects = params.get("projects");
-  if (!rawProjects) return;
+  if (!rawProjects) return false;
 
   let titles = [];
   try {
@@ -121,17 +133,56 @@ function applyImportedProjectsFromHash() {
     titles = decodeURIComponent(rawProjects).split(/\r?\n/);
   }
 
-  const projects = titles
-    .map((title) => String(title || "").trim())
-    .filter(Boolean)
-    .map((title) => ({ id: `project-${crypto.randomUUID()}`, title }));
+  const importedProjects = titles
+    .map(parseImportedProjectTitle)
+    .filter((project) => project.title);
+
+  const existingIdsByTitle = new Map(
+    (settings.projects || []).map((project) => [normalizeImportedProjectTitle(project.title), project.id])
+  );
+  const projects = importedProjects.map((project) => ({
+    id: existingIdsByTitle.get(normalizeImportedProjectTitle(project.title)) || `project-${crypto.randomUUID()}`,
+    title: project.title
+  }));
 
   if (!projects.length) return;
 
+  const autoGroups = (settings.groups || []).map((group) => {
+    const groupNumber = Number(String(group.id || "").match(/\d+/)?.[0] || 0);
+    const excludedProjectIds = groupNumber >= 1 && groupNumber <= 5
+      ? projects
+        .filter((project, index) => importedProjects[index].groupMarker === groupNumber)
+        .map((project) => project.id)
+      : [];
+    return { ...group, excludedProjectIds };
+  });
+
+  settings = { ...settings, projects, groups: autoGroups };
   renderProjectEditor(projects);
-  renderGroupSettings(settings.groups, projects);
-  settingsMessage.textContent = "사다리 최종순서가 전체 과제 리스트에 반영되었습니다. 실제 적용하려면 설정 저장을 눌러주세요.";
+  renderGroupSettings(autoGroups, projects);
+  settingsMessage.textContent = "사다리 최종순서와 그룹별 제외 과제를 반영했습니다. 자동 저장 중입니다.";
   history.replaceState(null, "", location.pathname);
+  await saveSettings({
+    successMessage: "사다리 최종순서, 그룹별 제외 과제, 과제명 표식 제거가 저장되었습니다."
+  });
+  return true;
+}
+
+function parseImportedProjectTitle(value) {
+  const rawTitle = String(value || "").trim();
+  const marker = rawTitle.match(/\s*_(\d+)\s*$/);
+  return {
+    title: rawTitle.replace(/\s*_\d+\s*$/, "").trim(),
+    groupMarker: marker ? Number(marker[1]) : null
+  };
+}
+
+function normalizeImportedProjectTitle(value) {
+  return String(value || "")
+    .replace(/\s*_\d+\s*$/, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
 }
 
 function renderProjectEditor(projects) {
@@ -216,7 +267,7 @@ function syncGroupProjectOptions() {
   renderGroupSettings(groups, projects);
 }
 
-async function saveSettings() {
+async function saveSettings(options = {}) {
   settingsMessage.textContent = "";
   const projects = collectProjects();
   if (!projects.length) {
@@ -239,7 +290,7 @@ async function saveSettings() {
     });
     const data = await response.json();
     if (!data.ok) throw new Error(data.message || "설정을 저장하지 못했습니다.");
-    settingsMessage.textContent = "설정이 저장되었습니다.";
+    settingsMessage.textContent = options.successMessage || "설정이 저장되었습니다.";
     await loadAll();
   } catch (error) {
     settingsMessage.textContent = error.message || "설정을 저장하지 못했습니다.";

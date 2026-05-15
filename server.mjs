@@ -16,6 +16,12 @@ const adminPassword = process.env.ADMIN_PASSWORD || "";
 const adminSessionToken = crypto.randomBytes(32).toString("hex");
 
 const config = JSON.parse(await readFile(configFile, "utf8"));
+const criteriaWeights = {
+  businessEffect: 35,
+  workFit: 25,
+  aiQuality: 20,
+  scalability: 20
+};
 const groups = config.groups.map((group, index) => ({
   ...group,
   order: index + 1
@@ -253,11 +259,12 @@ function aggregateResults() {
     for (const [projectId, scoreRow] of Object.entries(submission.scores || {})) {
       const row = byProject.get(projectId);
       if (!row) continue;
-      const rawTotal = config.criteria.reduce((sum, criterion) => {
+      const weightedTotal = config.criteria.reduce((sum, criterion) => {
         const value = Number(scoreRow[criterion.id] || 0);
         row.criteriaSums[criterion.id] += value;
-        return sum + value;
+        return sum + value * criterionWeight(criterion.id);
       }, 0);
+      const rawTotal = weightedTotal / 25;
       row.voteCount += 1;
       row.rawTotalSum += rawTotal;
       row.finalScoreSum += rawTotal * config.scoreMultiplier;
@@ -290,6 +297,7 @@ function aggregateResults() {
     groupCount: groups.length,
     projectCount: projects.length,
     criteria: config.criteria,
+    criteriaWeights,
     scoreMultiplier: config.scoreMultiplier,
     submissionCount: store.submissions.length,
     groupVoteCounts,
@@ -308,6 +316,10 @@ function round(value, digits) {
   return Math.round(value * scale) / scale;
 }
 
+function criterionWeight(criterionId) {
+  return criteriaWeights[criterionId] ?? 25;
+}
+
 function escapeCsv(value) {
   const text = String(value ?? "");
   if (/[",\n\r]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
@@ -322,7 +334,7 @@ function resultsCsv() {
     "투표수",
     "최종 평균(100점)",
     "원점수 평균(20점)",
-    ...config.criteria.map((criterion) => `${criterion.title} 평균(5점)`)
+    ...config.criteria.map((criterion) => `${criterion.title}(${criterionWeight(criterion.id)}%) 평균(5점)`)
   ];
   const lines = [headers];
   for (const row of results.rows) {

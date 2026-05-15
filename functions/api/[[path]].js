@@ -3,6 +3,12 @@ const DEFAULT_CONFIG = {
   expectedVoters: 110,
   scoreMultiplier: 5,
   duplicatePolicy: "deviceOnly",
+  criteriaWeights: {
+    businessEffect: 35,
+    workFit: 25,
+    aiQuality: 20,
+    scalability: 20
+  },
   criteria: [
     {
       id: "businessEffect",
@@ -467,11 +473,12 @@ async function aggregateResults(db, appConfig) {
     for (const [projectId, scoreRow] of Object.entries(scores)) {
       const row = byProject.get(projectId);
       if (!row) continue;
-      const rawTotal = appConfig.criteria.reduce((sum, criterion) => {
+      const weightedTotal = appConfig.criteria.reduce((sum, criterion) => {
         const value = Number(scoreRow[criterion.id] || 0);
         row.criteriaSums[criterion.id] += value;
-        return sum + value;
+        return sum + value * criterionWeight(criterion.id);
       }, 0);
+      const rawTotal = weightedTotal / 25;
       row.voteCount += 1;
       row.rawTotalSum += rawTotal;
       row.finalScoreSum += rawTotal * appConfig.scoreMultiplier;
@@ -504,6 +511,7 @@ async function aggregateResults(db, appConfig) {
     groupCount: appConfig.groups.length,
     projectCount: appConfig.projects.length,
     criteria: appConfig.criteria,
+    criteriaWeights: DEFAULT_CONFIG.criteriaWeights,
     scoreMultiplier: appConfig.scoreMultiplier,
     submissionCount: submissions.length,
     groupVoteCounts,
@@ -525,7 +533,7 @@ async function resultsCsv(db, appConfig) {
     "투표수",
     "최종 평균(100점)",
     "원점수 평균(20점)",
-    ...appConfig.criteria.map((criterion) => `${criterion.title} 평균(5점)`)
+    ...appConfig.criteria.map((criterion) => `${criterion.title}(${criterionWeight(criterion.id)}%) 평균(5점)`)
   ];
   const lines = [headers];
   for (const row of results.rows) {
@@ -539,6 +547,10 @@ async function resultsCsv(db, appConfig) {
     ]);
   }
   return `\uFEFF${lines.map((line) => line.map(escapeCsv).join(",")).join("\r\n")}`;
+}
+
+function criterionWeight(criterionId) {
+  return DEFAULT_CONFIG.criteriaWeights[criterionId] ?? 25;
 }
 
 async function findDuplicate(db, appConfig, clientKey) {
