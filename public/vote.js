@@ -51,7 +51,7 @@ async function checkDuplicate() {
 function renderHeader() {
   document.title = config.contestName;
   teamName.textContent = `${config.group.name} 평가 링크`;
-  pageTitle.textContent = "AI 산출물 평가";
+  pageTitle.textContent = "최강 지원팀 AI 과제 평가";
   showNotice("각 과제별 4개 항목을 5점부터 1점까지 평가해 주세요.", false);
 }
 
@@ -62,7 +62,9 @@ function renderForm() {
   voteForm.addEventListener("submit", submitVote);
   draftButton.addEventListener("click", () => {
     saveDraft();
-    showNotice("임시저장되었습니다. 최종제출 전까지 이 기기에서 다시 열면 이어서 입력할 수 있습니다.", false);
+    const message = "임시저장되었습니다. 최종제출 전까지 이 기기에서 다시 열면 이어서 입력할 수 있습니다.";
+    showNotice(message, false);
+    alert(message);
   });
   findMissingButton.addEventListener("click", scrollToFirstMissing);
   updateProgress();
@@ -123,7 +125,7 @@ function updateProgress() {
   }, 0);
   const completedProjects = config.projects.filter((project) => isProjectComplete(project.id)).length;
 
-  progressText.textContent = `${answered} / ${total}`;
+  progressText.textContent = `${answered} / ${total} 항목 완료`;
   progressDetail.textContent = `${completedProjects}개 과제 완료`;
   submitButton.disabled = answered !== total;
   submitHint.textContent = answered === total
@@ -189,7 +191,7 @@ function showDone(votedAt) {
   const time = votedAt ? new Date(votedAt).toLocaleString("ko-KR") : "";
   doneState.querySelector("p:last-child").textContent = time
     ? `${time}에 제출된 기록이 있습니다.`
-    : "이미 이 IP 또는 단말에서 평가가 제출되었습니다.";
+    : "이미 이 단말에서 평가가 제출되었습니다.";
 }
 
 function showNotice(message, isError) {

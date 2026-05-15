@@ -2,7 +2,7 @@ const DEFAULT_CONFIG = {
   contestName: "AI POC 산출물 평가",
   expectedVoters: 110,
   scoreMultiplier: 5,
-  duplicatePolicy: "deviceOrIp",
+  duplicatePolicy: "deviceOnly",
   criteria: [
     {
       id: "businessEffect",
@@ -114,7 +114,7 @@ export async function onRequest(context) {
       if (duplicate) {
         return json({
           ok: false,
-          message: "이미 이 IP 또는 단말에서 투표가 완료되었습니다.",
+          message: "이미 이 단말에서 투표가 완료되었습니다.",
           votedAt: duplicate.created_at
         }, 409);
       }
@@ -303,7 +303,7 @@ function normalizeConfig(appConfig) {
     contestName: String(appConfig.contestName || DEFAULT_CONFIG.contestName),
     expectedVoters: Number(appConfig.expectedVoters || DEFAULT_CONFIG.expectedVoters),
     scoreMultiplier: Number(appConfig.scoreMultiplier || DEFAULT_CONFIG.scoreMultiplier),
-    duplicatePolicy: appConfig.duplicatePolicy || DEFAULT_CONFIG.duplicatePolicy,
+    duplicatePolicy: DEFAULT_CONFIG.duplicatePolicy,
     criteria: DEFAULT_CONFIG.criteria,
     groups: normalizedGroups,
     projects: normalizedProjects
@@ -536,19 +536,14 @@ async function resultsCsv(db, appConfig) {
 }
 
 async function findDuplicate(db, appConfig, clientKey) {
-  const policy = appConfig.duplicatePolicy || "deviceOrIp";
   const clauses = [];
   const bindings = [];
 
-  if (policy !== "deviceOnly" && clientKey.ip) {
-    clauses.push("ip = ?");
-    bindings.push(clientKey.ip);
-  }
-  if (policy !== "ipOnly" && clientKey.deviceHash) {
+  if (clientKey.deviceHash) {
     clauses.push("device_hash = ?");
     bindings.push(clientKey.deviceHash);
   }
-  if (policy !== "ipOnly" && clientKey.fingerprintHash) {
+  if (clientKey.fingerprintHash) {
     clauses.push("fingerprint_hash = ?");
     bindings.push(clientKey.fingerprintHash);
   }
