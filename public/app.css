@@ -395,16 +395,35 @@ h3 {
   backdrop-filter: blur(14px);
 }
 
+.sticky-progress > div {
+  min-width: 0;
+}
+
 .sticky-progress strong {
   display: block;
   margin-bottom: 2px;
-  font-size: 18px;
+  font-size: clamp(14px, 4vw, 18px);
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .sticky-progress span,
 .submit-bar p {
   color: var(--muted);
   font-size: 13px;
+}
+
+.sticky-progress span {
+  display: block;
+  white-space: nowrap;
+}
+
+.sticky-progress .compact {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 0 10px;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .project-list {
@@ -707,7 +726,7 @@ h3 {
 .score-header {
   padding: 0 2px 5px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
   text-align: center;
 }
@@ -755,6 +774,25 @@ h3 {
 }
 
 @media (max-width: 420px) {
+  .sticky-progress {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .sticky-progress strong {
+    font-size: 14px;
+  }
+
+  .sticky-progress span,
+  .sticky-progress .compact {
+    font-size: 12px;
+  }
+
+  .sticky-progress .compact {
+    min-height: 36px;
+    padding: 0 8px;
+  }
+
   .score-header,
   .score-row {
     grid-template-columns: minmax(98px, 1fr) repeat(5, minmax(30px, 34px));

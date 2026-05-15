@@ -11,7 +11,6 @@ const progressText = document.querySelector("#progressText");
 const progressDetail = document.querySelector("#progressDetail");
 const submitButton = document.querySelector("#submitButton");
 const draftButton = document.querySelector("#draftButton");
-const submitHint = document.querySelector("#submitHint");
 const findMissingButton = document.querySelector("#findMissingButton");
 
 let config;
@@ -105,7 +104,7 @@ function renderProject(project, index) {
       </header>
       <div class="criteria-list compact-list">
         <div class="score-header" aria-hidden="true">
-          <span></span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+          <span></span><span>우수</span><span></span><span></span><span></span><span>미흡</span>
         </div>
         ${criteriaHtml}
       </div>
@@ -134,9 +133,6 @@ function updateProgress() {
   progressText.textContent = `${answered} / ${total} 항목 완료`;
   progressDetail.textContent = `${completedProjects}개 과제 완료`;
   submitButton.disabled = answered !== total;
-  submitHint.textContent = answered === total
-    ? `원점수 ${config.rawScoreRange.min}-${config.rawScoreRange.max}점, 최종점수 ${config.finalScoreRange.min}-${config.finalScoreRange.max}점으로 환산됩니다.`
-    : "임시저장은 언제든 가능하고, 모든 항목 입력 후 최종제출할 수 있습니다.";
 
   document.querySelectorAll("[data-project-card]").forEach((card) => {
     card.classList.toggle("incomplete", !isProjectComplete(card.dataset.projectCard));
