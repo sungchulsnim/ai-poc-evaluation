@@ -12,12 +12,30 @@ export default {
     if (assetPath !== url.pathname) {
       const assetUrl = new URL(request.url);
       assetUrl.pathname = assetPath;
-      return env.ASSETS.fetch(new Request(assetUrl, request));
+      return serveAsset(new Request(assetUrl, request), env, assetPath);
     }
 
-    return env.ASSETS.fetch(request);
+    return serveAsset(request, env, assetPath);
   }
 };
+
+async function serveAsset(request, env, assetPath) {
+  const response = await env.ASSETS.fetch(request);
+  const headers = new Headers(response.headers);
+  headers.set("cache-control", cacheControlFor(assetPath));
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
+
+function cacheControlFor(assetPath) {
+  if (/\.(html|js|css)$/.test(assetPath)) {
+    return "no-store, max-age=0";
+  }
+  return "public, max-age=3600";
+}
 
 function routeAssetPath(pathname) {
   if (pathname === "/" || pathname === "/admin") return "/admin.html";

@@ -171,13 +171,31 @@ function buildImportedSettings(importedProjects) {
     projectIdsByMarker.get(marker).push(projects[index].id);
   });
 
-  const groups = (settings.groups || []).map((group) => {
+  const groups = ensureImportGroups(settings.groups).map((group) => {
     const groupNumber = Number(String(group.id || "").match(/\d+/)?.[0] || 0);
     const excludedProjectIds = groupNumber >= 1 && groupNumber <= 5 ? projectIdsByMarker.get(groupNumber) || [] : [];
     return { ...group, excludedProjectIds };
   });
 
   return { projects, groups, markerCounts };
+}
+
+function ensureImportGroups(groups = []) {
+  const groupsByNumber = new Map();
+  groups.forEach((group) => {
+    const groupNumber = Number(String(group.id || "").match(/\d+/)?.[0] || 0);
+    if (groupNumber >= 1 && groupNumber <= 6 && !groupsByNumber.has(groupNumber)) {
+      groupsByNumber.set(groupNumber, group);
+    }
+  });
+
+  return [1, 2, 3, 4, 5, 6].map((groupNumber) => (
+    groupsByNumber.get(groupNumber) || {
+      id: `group${groupNumber}`,
+      name: `${groupNumber}그룹`,
+      excludedProjectIds: []
+    }
+  ));
 }
 
 function formatImportMarkerSummary(markerCounts) {
