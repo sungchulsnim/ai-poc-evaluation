@@ -318,8 +318,8 @@ function normalizeConfig(appConfig) {
 
 function normalizeSubmittedConfig(currentConfig, body) {
   const currentByTitle = new Map(currentConfig.projects.map((project) => [normalizeTitle(project.title), project.id]));
-  const currentIds = new Set(currentConfig.projects.map((project) => project.id));
   const seenIds = new Set();
+  const submittedIdMap = new Map();
 
   const submittedProjects = Array.isArray(body.projects) ? body.projects : [];
   const projects = submittedProjects
@@ -327,12 +327,14 @@ function normalizeSubmittedConfig(currentConfig, body) {
       const title = String(project.title || "").trim();
       if (!title) return null;
 
-      let id = safeId(project.id);
-      if (!id || !currentIds.has(id)) {
+      const submittedId = safeId(project.id);
+      let id = submittedId;
+      if (!id) {
         id = currentByTitle.get(normalizeTitle(title)) || `project-${crypto.randomUUID()}`;
       }
       if (seenIds.has(id)) id = `project-${crypto.randomUUID()}`;
       seenIds.add(id);
+      if (submittedId) submittedIdMap.set(submittedId, id);
 
       return { id, title };
     })
@@ -350,11 +352,15 @@ function normalizeSubmittedConfig(currentConfig, body) {
     const excludedProjectIds = Array.isArray(submittedGroup?.excludedProjectIds)
       ? submittedGroup.excludedProjectIds
       : currentGroup.excludedProjectIds;
+    const remappedExcludedProjectIds = excludedProjectIds.map((projectId) => {
+      const safeProjectId = safeId(projectId);
+      return submittedIdMap.get(safeProjectId) || safeProjectId;
+    });
 
     return {
       id: defaultGroup.id,
       name: String(submittedGroup?.name || currentGroup.name || defaultGroup.name).trim() || defaultGroup.name,
-      excludedProjectIds: [...new Set(excludedProjectIds.filter((projectId) => validProjectIds.has(projectId)))]
+      excludedProjectIds: [...new Set(remappedExcludedProjectIds.filter((projectId) => validProjectIds.has(projectId)))]
     };
   });
 
