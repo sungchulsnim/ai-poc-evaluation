@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>최강 지원팀 AI 과제 평가 매뉴얼</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #162033;
+        --muted: #657189;
+        --line: #d9e0ec;
+        --panel: #ffffff;
+        --soft: #f5f7fb;
+        --brand: #246b5b;
+        --brand-dark: #16483e;
+        --accent: #3e5ecb;
+        --warn: #9a5b12;
+        --warn-bg: #fff7e8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", Arial, sans-serif;
+        color: var(--ink);
+        background: var(--soft);
+        line-height: 1.62;
+      }
+
+      .page {
+        width: min(920px, 100%);
+        margin: 0 auto;
+        padding: 22px 16px 42px;
+      }
+
+      header {
+        padding: 24px 0 18px;
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        color: var(--brand);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(28px, 8vw, 46px);
+        line-height: 1.14;
+        letter-spacing: 0;
+      }
+
+      .lead {
+        margin: 14px 0 0;
+        color: var(--muted);
+        font-size: 16px;
+      }
+
+      .notice {
+        margin-top: 18px;
+        padding: 14px 16px;
+        border: 1px solid #f0d6aa;
+        border-radius: 8px;
+        background: var(--warn-bg);
+        color: var(--warn);
+        font-weight: 700;
+      }
+
+      .panel {
+        margin-top: 16px;
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: 0 10px 24px rgba(35, 45, 70, 0.06);
+      }
+
+      .panel h2 {
+        margin: 0 0 12px;
+        font-size: 21px;
+        line-height: 1.28;
+        letter-spacing: 0;
+      }
+
+      .panel h3 {
+        margin: 18px 0 8px;
+        font-size: 17px;
+        letter-spacing: 0;
+      }
+
+      .steps {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 34px 1fr;
+        gap: 12px;
+        align-items: start;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcff;
+      }
+
+      .step-number {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 999px;
+        background: var(--brand);
+        color: #ffffff;
+        font-weight: 800;
+      }
+
+      .step strong {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 16px;
+      }
+
+      .step span,
+      li,
+      p {
+        color: var(--muted);
+      }
+
+      .criteria {
+        display: grid;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .criterion {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcff;
+      }
+
+      .criterion-head {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+      }
+
+      .criterion strong {
+        display: block;
+        color: var(--ink);
+      }
+
+      .weight {
+        flex: 0 0 auto;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #eaf3f0;
+        color: var(--brand-dark);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .tag {
+        padding: 5px 8px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #ffffff;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .score-scale {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+        margin-top: 12px;
+      }
+
+      .score {
+        min-height: 58px;
+        padding: 8px 4px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        text-align: center;
+      }
+
+      .score strong {
+        display: block;
+        color: var(--accent);
+        font-size: 18px;
+      }
+
+      .score span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .checklist {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      .checklist li + li {
+        margin-top: 8px;
+      }
+
+      .callout {
+        margin: 12px 0 0;
+        padding: 13px 14px;
+        border-left: 4px solid var(--accent);
+        border-radius: 6px;
+        background: #f1f4ff;
+        color: #304071;
+      }
+
+      .footer-note {
+        margin: 18px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        text-align: center;
+      }
+
+      @media (max-width: 560px) {
+        .page {
+          padding: 18px 12px 34px;
+        }
+
+        .panel {
+          padding: 16px;
+        }
+
+        .step {
+          grid-template-columns: 30px 1fr;
+          gap: 10px;
+          padding: 12px;
+        }
+
+        .step-number {
+          width: 30px;
+          height: 30px;
+        }
+
+        .score-scale {
+          gap: 4px;
+        }
+
+        .score {
+          min-height: 52px;
+          padding: 7px 2px;
+        }
+
+        .score span {
+          font-size: 11px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header>
+        <p class="eyebrow">AI POC Workshop</p>
+        <h1>최강 지원팀 AI 과제 평가 매뉴얼</h1>
+        <p class="lead">아래 내용을 확인한 뒤, 안내받은 그룹별 평가 링크로 접속해 평가를 진행해 주세요.</p>
+        <div class="notice">각 그룹별 평가 링크에는 본인 그룹의 발표 과제가 제외되어 있습니다. 화면에 보이는 과제만 평가하면 됩니다.</div>
+      </header>
+
+      <section class="panel">
+        <h2>평가 진행 순서</h2>
+        <ol class="steps">
+          <li class="step">
+            <span class="step-number">1</span>
+            <span><strong>안내받은 링크 접속</strong>본인에게 전달된 그룹별 평가 링크를 스마트폰에서 엽니다. 다른 그룹 링크로 접속하지 않도록 링크명을 확인해 주세요.</span>
+          </li>
+          <li class="step">
+            <span class="step-number">2</span>
+            <span><strong>평가 대상 확인</strong>발표 과제 리스트 중 본인 그룹 과제는 자동으로 제외되어 있습니다. 제외된 과제는 화면에 표시되지 않으므로 별도로 찾거나 입력하지 않아도 됩니다.</span>
+          </li>
+          <li class="step">
+            <span class="step-number">3</span>
+            <span><strong>과제별 4개 항목 평가</strong>각 과제마다 업무 효과성, 현업 적용성, AI 활용 품질, 확산 가능성을 1점부터 5점까지 선택합니다.</span>
+          </li>
+          <li class="step">
+            <span class="step-number">4</span>
+            <span><strong>임시저장 활용</strong>평가 중간에 멈춰야 한다면 임시저장을 누릅니다. 최종 제출 전에는 다시 접속해 이어서 입력할 수 있습니다.</span>
+          </li>
+          <li class="step">
+            <span class="step-number">5</span>
+            <span><strong>미입력 항목 확인</strong>진행률과 미입력 항목 찾기 버튼을 확인해 빠진 평가가 없는지 점검합니다.</span>
+          </li>
+          <li class="step">
+            <span class="step-number">6</span>
+            <span><strong>최종 제출</strong>모든 항목 입력 후 최종 제출을 누릅니다. 제출 후에는 수정하거나 다시 제출할 수 없습니다.</span>
+          </li>
+        </ol>
+      </section>
+
+      <section class="panel">
+        <h2>평가 항목 안내</h2>
+        <p>아래 4가지 항목의 의미를 잘 고려해서 점수를 선택해 주세요. 각 항목은 최종 평가 점수에 서로 다른 비중으로 반영됩니다.</p>
+        <div class="criteria">
+          <div class="criterion">
+            <div class="criterion-head">
+              <strong>업무 효과성</strong>
+              <span class="weight">35%</span>
+            </div>
+            실제 업무 성과를 얼마나 개선했는지 측정합니다.
+            <div class="tags">
+              <span class="tag">시간 절감</span>
+              <span class="tag">비용 절감</span>
+              <span class="tag">생산성 향상</span>
+              <span class="tag">오류 감소</span>
+            </div>
+          </div>
+          <div class="criterion">
+            <div class="criterion-head">
+              <strong>현업 적용성</strong>
+              <span class="weight">25%</span>
+            </div>
+            실제 업무에 바로 적용 가능한지 평가합니다.
+            <div class="tags">
+              <span class="tag">사용 편의성</span>
+              <span class="tag">프로세스 적합성</span>
+              <span class="tag">완성도</span>
+            </div>
+          </div>
+          <div class="criterion">
+            <div class="criterion-head">
+              <strong>AI 활용 품질</strong>
+              <span class="weight">20%</span>
+            </div>
+            AI를 적절하고 신뢰성 있게 활용했는지 평가합니다.
+            <div class="tags">
+              <span class="tag">결과 정확도</span>
+              <span class="tag">일관성</span>
+              <span class="tag">자동화 수준</span>
+              <span class="tag">검증 가능성</span>
+            </div>
+          </div>
+          <div class="criterion">
+            <div class="criterion-head">
+              <strong>확산 가능성</strong>
+              <span class="weight">20%</span>
+            </div>
+            다른 파트나 업무로 확장 가능한지 평가합니다.
+            <div class="tags">
+              <span class="tag">타파트 전파</span>
+              <span class="tag">재사용성</span>
+              <span class="tag">유지보수 용이성</span>
+            </div>
+          </div>
+        </div>
+
+        <h3>점수 기준</h3>
+        <div class="score-scale" aria-label="1점부터 5점까지 점수 기준">
+          <div class="score"><strong>5</strong><span>우수</span></div>
+          <div class="score"><strong>4</strong><span>좋음</span></div>
+          <div class="score"><strong>3</strong><span>보통</span></div>
+          <div class="score"><strong>2</strong><span>부족</span></div>
+          <div class="score"><strong>1</strong><span>미흡</span></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>임시저장과 최종 제출</h2>
+        <ul class="checklist">
+          <li>임시저장은 현재까지 선택한 점수를 보관하는 기능입니다.</li>
+          <li>임시저장을 해도 최종 제출은 완료되지 않습니다.</li>
+          <li>같은 스마트폰과 같은 링크로 다시 접속하면 임시저장된 내용이 이어서 표시됩니다.</li>
+          <li>최종 제출을 누르면 평가가 완료되며, 이후에는 수정하거나 다시 제출할 수 없습니다.</li>
+          <li>동일한 단말에서는 중복 제출이 제한될 수 있으니 제출 전 내용을 꼭 확인해 주세요.</li>
+        </ul>
+        <p class="callout">중간에 화면을 닫아야 할 때는 먼저 임시저장을 누른 뒤 종료해 주세요.</p>
+      </section>
+
+      <section class="panel">
+        <h2>평가 전 체크리스트</h2>
+        <ul class="checklist">
+          <li>본인에게 전달된 그룹 링크로 접속했는지 확인합니다.</li>
+          <li>화면에 표시된 과제만 평가합니다. 본인 그룹 과제는 제외되어 있습니다.</li>
+          <li>각 과제의 4개 항목을 모두 선택합니다.</li>
+          <li>진행률이 모두 완료 상태인지 확인합니다.</li>
+          <li>제출 전 미입력 항목 찾기를 눌러 누락 항목이 없는지 확인합니다.</li>
+          <li>최종 제출 후에는 수정이 불가하므로 신중하게 제출합니다.</li>
+        </ul>
+      </section>
+
+      <p class="footer-note">문의사항이 있으면 워크샵 운영 담당자에게 말씀해 주세요.</p>
+    </main>
+  </body>
+</html>
