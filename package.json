@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "test:vote-safety": "node scripts/vote-submit-safety-audit.mjs"
+    "test:vote-safety": "node scripts/vote-submit-safety-audit.mjs",
+    "test:concurrency": "node scripts/concurrency-submit-load-test.mjs"
   }
 }

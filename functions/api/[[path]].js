@@ -145,6 +145,16 @@ export async function onRequest(context) {
         scoresJson: JSON.stringify(normalizedScores)
       };
 
+      try {
+        await reserveDeviceSubmission(env.DB, submission);
+      } catch (error) {
+        if (!isDuplicateDeviceError(error)) throw error;
+        return json({
+          ok: false,
+          message: "이미 이 단말에서 투표가 완료되었습니다."
+        }, 409);
+      }
+
       await env.DB.prepare(`
         INSERT INTO submissions (
           id, created_at, group_id, group_name, ip, user_agent, device_hash, fingerprint_hash, scores_json
@@ -206,7 +216,10 @@ export async function onRequest(context) {
       if (body.confirmText !== "초기화") {
         return json({ ok: false, message: "초기화를 확인하려면 '초기화'를 입력해야 합니다." }, 400);
       }
-      await env.DB.prepare("DELETE FROM submissions").run();
+      await env.DB.batch([
+        env.DB.prepare("DELETE FROM submissions"),
+        env.DB.prepare("DELETE FROM submission_devices")
+      ]);
       return json({ ok: true, message: "평가 정보가 초기화되었습니다." });
     }
 
@@ -238,6 +251,13 @@ async function initDb(db) {
         updated_at TEXT NOT NULL
       )
     `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS submission_devices (
+        device_hash TEXT PRIMARY KEY,
+        submission_id TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    `),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_submissions_ip ON submissions(ip)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_submissions_device ON submissions(device_hash)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_submissions_fingerprint ON submissions(fingerprint_hash)")
@@ -246,6 +266,17 @@ async function initDb(db) {
 
 function requireDb(env) {
   if (!env.DB) throw new Error("Cloudflare D1 DB 바인딩이 필요합니다. 바인딩 이름은 DB로 설정해 주세요.");
+}
+
+async function reserveDeviceSubmission(db, submission) {
+  await db.prepare(`
+    INSERT INTO submission_devices (device_hash, submission_id, created_at)
+    VALUES (?, ?, ?)
+  `).bind(submission.deviceHash, submission.id, submission.createdAt).run();
+}
+
+function isDuplicateDeviceError(error) {
+  return /UNIQUE constraint failed: submission_devices\.device_hash|constraint failed/i.test(error?.message || "");
 }
 
 async function getAppConfig(db) {
