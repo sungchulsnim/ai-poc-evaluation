@@ -3,11 +3,46 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>5그룹 AI POC 평가</title>
-    <meta http-equiv="refresh" content="0; url=/vote/group5">
-    <script>location.replace("/vote/group5");</script>
+    <title>AI POC 산출물 평가</title>
+    <link rel="stylesheet" href="/app.css">
   </head>
-  <body>
-    <a href="/vote/group5">5그룹 평가 페이지로 이동</a>
+  <body class="vote-body">
+    <header class="vote-header">
+      <div>
+        <p class="eyebrow" id="teamName">AI POC Workshop</p>
+        <h1 id="pageTitle">최강 지원팀 AI 과제 평가</h1>
+      </div>
+      <div class="score-chip">5점-1점</div>
+    </header>
+
+    <main class="vote-main">
+      <section class="notice" id="notice" hidden></section>
+      <section class="done-state" id="doneState" hidden>
+        <p class="eyebrow">Submitted</p>
+        <h2>투표가 완료되었습니다.</h2>
+        <p>이미 이 단말에서 평가가 제출되었습니다.</p>
+      </section>
+
+      <form id="voteForm" hidden>
+        <div class="sticky-progress">
+          <div>
+            <strong id="progressText">0 / 0 항목 완료</strong>
+            <span id="progressDetail">입력 대기</span>
+          </div>
+          <button class="ghost-button compact" id="findMissingButton" type="button">미입력 항목 찾기</button>
+        </div>
+
+        <div class="project-list" id="projectList"></div>
+
+        <div class="submit-bar">
+          <div class="submit-actions">
+            <button class="ghost-button" id="draftButton" type="button">임시저장</button>
+            <button class="primary-button" id="submitButton" type="submit" disabled>최종제출</button>
+          </div>
+        </div>
+      </form>
+    </main>
+
+    <script src="/vote.js" type="module"></script>
   </body>
 </html>
