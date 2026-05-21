@@ -40,7 +40,11 @@ function cacheControlFor(assetPath) {
 function routeAssetPath(pathname) {
   if (pathname === "/" || pathname === "/admin") return "/admin.html";
   if (pathname === "/login") return "/login.html";
+  if (isGroupVotePath(pathname)) return "/vote.html";
   if (pathname.startsWith("/vote/")) return "/vote.html";
-  if (/^\/group[1-6]$/.test(pathname)) return `${pathname}.html`;
   return pathname;
+}
+
+function isGroupVotePath(pathname) {
+  return /^\/(?:vote\/)?group[1-6](?:\.html)?\/?$/i.test(pathname);
 }

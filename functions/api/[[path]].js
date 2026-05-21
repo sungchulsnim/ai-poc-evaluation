@@ -557,7 +557,7 @@ async function aggregateResults(db, appConfig) {
       id: group.id,
       name: group.name,
       excludedProjectCount: group.excludedProjectIds?.length || 0,
-      path: `/group${group.order}.html`
+      path: `/vote/group${group.order}`
     }))
   };
 }
