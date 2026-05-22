@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>최강 지원팀 AI 과제 평가</title>
+    <link rel="stylesheet" href="/app.css">
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #f5f7fb;
+        color: #162033;
+        font-family: "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", Arial, sans-serif;
+      }
+
+      .safe-home {
+        width: min(760px, 100%);
+        margin: 0 auto;
+        padding: 30px 16px 44px;
+      }
+
+      .safe-panel {
+        padding: 22px;
+        border: 1px solid #d9e0ec;
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 12px 26px rgba(35, 45, 70, 0.08);
+      }
+
+      .safe-panel + .safe-panel {
+        margin-top: 16px;
+      }
+
+      .safe-panel h1 {
+        margin: 0 0 10px;
+        font-size: clamp(28px, 8vw, 42px);
+        line-height: 1.15;
+        letter-spacing: 0;
+      }
+
+      .safe-panel h2 {
+        margin: 0 0 12px;
+        font-size: 21px;
+        letter-spacing: 0;
+      }
+
+      .safe-panel p {
+        margin: 0;
+        color: #657189;
+        line-height: 1.65;
+      }
+
+      .group-links {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .group-links a {
+        display: block;
+        padding: 13px 14px;
+        border: 1px solid #d9e0ec;
+        border-radius: 8px;
+        background: #fbfcff;
+        color: #162033;
+        font-weight: 800;
+        text-align: center;
+        text-decoration: none;
+      }
+
+      .group-links a:focus,
+      .group-links a:hover {
+        border-color: #246b5b;
+        color: #16483e;
+      }
+
+      .notice {
+        margin-top: 14px;
+        padding: 13px 14px;
+        border-left: 4px solid #3e5ecb;
+        border-radius: 6px;
+        background: #f1f4ff;
+        color: #304071;
+        font-weight: 700;
+      }
+
+      @media (max-width: 520px) {
+        .group-links {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="safe-home">
+      <section class="safe-panel">
+        <p class="eyebrow">AI POC Workshop</p>
+        <h1>최강 지원팀 AI 과제 평가</h1>
+        <p>이 페이지는 기본 안내 화면입니다. 평가자는 안내받은 본인 그룹 링크로 접속해 주세요.</p>
+        <div class="notice">본인 그룹이 확실하지 않으면 임의로 선택하지 말고 운영 담당자에게 확인해 주세요.</div>
+      </section>
+
+      <section class="safe-panel">
+        <h2>그룹별 평가 링크</h2>
+        <p>링크가 잘렸거나 기본 주소로 들어온 경우에만 아래에서 본인 그룹을 선택하세요.</p>
+        <div class="group-links">
+          <a href="/vote/group1">1그룹 평가</a>
+          <a href="/vote/group2">2그룹 평가</a>
+          <a href="/vote/group3">3그룹 평가</a>
+          <a href="/vote/group4">4그룹 평가</a>
+          <a href="/vote/group5">5그룹 평가</a>
+          <a href="/vote/group6">6그룹 평가</a>
+        </div>
+      </section>
+
+      <section class="safe-panel">
+        <h2>평가 안내</h2>
+        <p>평가 방법이 궁금하면 아래 매뉴얼을 확인해 주세요.</p>
+        <div class="group-links">
+          <a href="/voter-manual.html">평가 매뉴얼 보기</a>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
