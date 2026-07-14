@@ -52,7 +52,7 @@ async function checkDuplicate() {
 function renderHeader() {
   document.title = config.contestName;
   teamName.textContent = `${config.group.name} 평가 링크`;
-  pageTitle.textContent = "최강 지원팀 AI 과제 평가";
+  pageTitle.textContent = "MX 지원팀 2차 Work-shop 과제 평가";
   showNotice("각 과제별 4개 항목을 5점부터 1점까지 평가해 주세요.", false);
 }
 
