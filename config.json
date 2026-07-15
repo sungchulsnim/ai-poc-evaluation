@@ -5,24 +5,22 @@
   "duplicatePolicy": "deviceOrIp",
   "criteria": [
     {
+      "id": "immediateUse",
+      "title": "즉시활용성",
+      "weight": 50,
+      "question": "법인이 바로 사용할 수 있는 완성도, 실사용 가능성, 입력/출력 흐름의 명확성"
+    },
+    {
       "id": "businessEffect",
-      "title": "업무 효과성",
-      "question": "시간 절감, 비용 절감, 반복업무 감소, 오류 감소 등 실제 업무 개선 효과가 큰가?"
+      "title": "업무효과성",
+      "weight": 30,
+      "question": "시간 절감, 반복업무 감소, 업무 품질 개선, 의사결정 지원 효과"
     },
     {
-      "id": "workFit",
-      "title": "현업 적용성",
-      "question": "현업 담당자가 이해하기 쉽고, 실제 업무에 바로 적용하기 쉬운가?"
-    },
-    {
-      "id": "aiQuality",
-      "title": "AI 활용 품질",
-      "question": "AI를 문제 해결에 의미 있게 활용했으며, 결과를 신뢰할 수 있는가?"
-    },
-    {
-      "id": "scalability",
-      "title": "확산 가능성",
-      "question": "다른 부서나 유사 업무에도 적용할 수 있는가?"
+      "id": "usability",
+      "title": "사용편의성",
+      "weight": 20,
+      "question": "법인에서 쉽게 이해하고 사용할 수 있는지, AI 결과 확인·수정이 쉬운지 등"
     }
   ],
   "groups": [

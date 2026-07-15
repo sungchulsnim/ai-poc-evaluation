@@ -760,6 +760,37 @@ h3 {
   white-space: nowrap;
 }
 
+.criterion-info-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  color: var(--blue-dark);
+  background: transparent;
+  text-align: left;
+}
+
+.criterion-info-button span {
+  border-bottom: 1px dashed currentColor;
+}
+
+.criterion-info-button small {
+  padding: 2px 5px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: var(--blue);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.criterion-info-button:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+
 .compact-options,
 .score-label {
   display: contents;
@@ -769,6 +800,57 @@ h3 {
   min-height: 36px;
   border-radius: 8px;
   font-size: 14px;
+}
+
+.criterion-dialog {
+  width: min(520px, calc(100% - 32px));
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  color: var(--ink);
+  background: var(--paper);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+}
+
+.criterion-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.58);
+  backdrop-filter: blur(2px);
+}
+
+.criterion-dialog-content {
+  padding: 24px;
+}
+
+.criterion-dialog-content header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.criterion-dialog-content h2 {
+  margin: 4px 0 0;
+  font-size: 24px;
+}
+
+.criterion-dialog-weight {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: var(--blue);
+  font-size: 14px;
+}
+
+.criterion-dialog-description {
+  margin: 20px 0;
+  color: #344054;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.criterion-dialog-close {
+  width: 100%;
 }
 
 .submit-actions {
@@ -824,5 +906,13 @@ h3 {
 
   .compact-options .score-option {
     min-height: 34px;
+  }
+
+  .criterion-dialog-content {
+    padding: 20px;
+  }
+
+  .criterion-dialog-content h2 {
+    font-size: 22px;
   }
 }

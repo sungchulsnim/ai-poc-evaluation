@@ -17,6 +17,7 @@ let config;
 let answers = {};
 let submitIntent = false;
 let isSubmitting = false;
+let criterionDialog;
 
 try {
   config = await loadConfig();
@@ -57,12 +58,14 @@ function renderHeader() {
     document.createElement("br"),
     document.createTextNode("2차 Work-shop 과제 평가")
   );
-  showNotice("각 과제별 4개 항목을 5점부터 1점까지 평가해 주세요.", false);
+  showNotice("각 과제별 3개 항목을 5점부터 1점까지 평가해 주세요.", false);
 }
 
 function renderForm() {
   voteForm.hidden = false;
   projectList.innerHTML = config.projects.map((project, index) => renderProject(project, index)).join("");
+  ensureCriterionDialog();
+  projectList.addEventListener("click", handleCriterionInfoClick);
   projectList.addEventListener("change", handleScoreChange);
   voteForm.addEventListener("submit", submitVote);
   submitButton.addEventListener("click", () => {
@@ -94,7 +97,15 @@ function renderProject(project, index) {
 
     return `
       <div class="score-row">
-        <div class="score-criterion">${escapeHtml(criterion.title)}</div>
+        <button
+          class="score-criterion criterion-info-button"
+          type="button"
+          data-criterion-info="${escapeHtml(criterion.id)}"
+          aria-label="${escapeHtml(`${criterion.title} ${criterion.weight}% 설명 보기`)}"
+        >
+          <span>${escapeHtml(criterion.title)}</span>
+          <small>${escapeHtml(criterion.weight)}%</small>
+        </button>
         <div class="score-options compact-options">${options}</div>
       </div>
     `;
@@ -114,6 +125,41 @@ function renderProject(project, index) {
       </div>
     </article>
   `;
+}
+
+function ensureCriterionDialog() {
+  if (criterionDialog) return;
+  criterionDialog = document.createElement("dialog");
+  criterionDialog.className = "criterion-dialog";
+  criterionDialog.innerHTML = `
+    <section class="criterion-dialog-content" aria-labelledby="criterionDialogTitle">
+      <header>
+        <div>
+          <p class="eyebrow">평가 기준 안내</p>
+          <h2 id="criterionDialogTitle"></h2>
+        </div>
+        <strong class="criterion-dialog-weight"></strong>
+      </header>
+      <p class="criterion-dialog-description"></p>
+      <button class="ghost-button criterion-dialog-close" type="button" data-criterion-dialog-close>닫기</button>
+    </section>
+  `;
+  criterionDialog.querySelector("[data-criterion-dialog-close]").addEventListener("click", () => criterionDialog.close());
+  criterionDialog.addEventListener("click", (event) => {
+    if (event.target === criterionDialog) criterionDialog.close();
+  });
+  document.body.append(criterionDialog);
+}
+
+function handleCriterionInfoClick(event) {
+  const button = event.target.closest("[data-criterion-info]");
+  if (!button) return;
+  const criterion = config.criteria.find((item) => item.id === button.dataset.criterionInfo);
+  if (!criterion) return;
+  criterionDialog.querySelector("#criterionDialogTitle").textContent = criterion.title;
+  criterionDialog.querySelector(".criterion-dialog-weight").textContent = `${criterion.weight}%`;
+  criterionDialog.querySelector(".criterion-dialog-description").textContent = criterion.question;
+  criterionDialog.showModal();
 }
 
 function handleScoreChange(event) {

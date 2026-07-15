@@ -14,10 +14,9 @@ const resetMessage = document.querySelector("#resetMessage");
 
 let settings = null;
 const DEFAULT_CRITERIA_WEIGHTS = {
-  businessEffect: 35,
-  workFit: 25,
-  aiQuality: 20,
-  scalability: 20
+  immediateUse: 50,
+  businessEffect: 30,
+  usability: 20
 };
 
 refreshButton.addEventListener("click", loadAll);
